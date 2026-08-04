@@ -49,7 +49,7 @@
 9. 任务确认：每个子 agent spawn 后第一步必须复述任务（任务内容、输入/输出路径、完成标准），总控确认后才放行开工。
 10. 失败处理：spawn/投递失败最多重试 2 次，仍失败暂停上报用户，禁止代做。
 11. G5 独立补验：模块已实现、仅需验证的场景，QA 评审员上报总控，由总控用新 task_name 创建独立验证 agent 补跑，并纳入 QA 报告。
-12. 任务文件机制：spawn 前主控先把任务正文写入 docs/process/tasks/<task_name>.md（模板 assets/templates/06-task.md）；spawn 消息只写"读 <路径> 执行任务"，正文不依赖消息加密通道。子 agent 第一步读取该文件并复述任务。
+12. 任务文件机制（自发现协议）：spawn 前主控把任务正文写入 docs/process/tasks/<task_name>.md（模板 assets/templates/06-task.md），文件名必须等于 spawn 的 task_name（取路径最后一段）。spawn 消息正文照写"读 <路径> 执行任务"作为双保险；已知部分环境下消息正文不可达（被代理丢弃），子 agent 必须能仅凭消息壳中的 Task name 定位任务书。查找顺序：Task name → 固定约定路径 → STATE/README 兜底；找不到即上报，禁止猜测。
 13. 并发容量：并发槽位以当前环境为准（默认 4 含主会话；32G 内存推荐 [agents] max_concurrent_threads_per_session = 6，即 6 子 agent + 主会话共 7 线程）。配置在会话启动时锁定，改后必须重启 Codex 新开会话生效；新会话提示应为 "7 available concurrency slots"。总线程不要到 8（触发费用警告）。一批并行 spawn 不超过剩余槽位（建议 2~3 个；编译型任务并发 ≤3），进入下一批前确认上一批完成或已关闭。
 14. 禁止递归：子 agent 任务书显式禁止 spawn 子 agent、禁止按总控角色行动；需要独立验证 agent 时由 QA 上报总控创建。
 15. 规范路径：spawn/消息目标一律用完整规范路径（如 /root/<task_name>），不使用裸相对名。
