@@ -69,7 +69,7 @@ description: 大型项目标准开发流程：需求蒸馏、产品需求（PRD�
 8. 并发容量：并发槽位以当前环境为准。默认 4 含主会话（同时最多 3 个子 agent）；32G 内存机器推荐 `[agents] max_concurrent_threads_per_session = 6`（6 子 agent + 主会话共 7 线程）。配置在会话启动时锁定，**改后必须重启 Codex 新开会话生效**；新会话提示应为 "7 available concurrency slots"。总线程不要到 8（会触发费用警告）。一批并行 spawn **不超过剩余槽位**（建议 2~3 个；编译型任务并发 ≤3），进入下一批前确认上一批已完成或已关闭。
 9. 禁止递归：子 agent **禁止再 spawn 子 agent、禁止按总控角色行动**；需要额外验证 agent 时上报总控，由总控创建。
 10. 规范路径：spawn/消息目标一律用**完整规范路径**（如 `/root/<task_name>`），不使用裸相对名。
-11. 启动抢锁：每次 spawn 子 agent 前，主控先调用 `scripts/acquire-launch-lock.ps1 -ProjectPath <项目路径> -TaskName <task_name>` 抢**全局启动锁**（跨项目互斥，锁目录优先 C:\tmp\standard-devflow-locks，回退 %TEMP%）。抢锁失败不得强行继续：重试 ≤2 次后上报用户。spawn 投递完成后立即调用 `scripts/release-launch-lock.ps1` 释放。
+11. 启动检查（数量 + 锁）：每次 spawn 子 agent 前，主控**先 list_agents 查当前存活 agent 数（含主控）**，再运行 `scripts/acquire-launch-lock.ps1 -ProjectPath <项目路径> -TaskName <task_name> -ActiveAgentCount <N> -MaxConcurrentThreads <M>`：脚本在**锁内**校验槽位（N 必须 < M，M 为总线程数含主控，默认 7），槽位不足返回 exit 3 且不持锁；锁被占用超时返回 exit 2。两者都不得强行继续：重试 ≤2 次后上报用户。spawn 投递完成后立即调用 `scripts/release-launch-lock.ps1` 释放。
 12. 任务书防重：任务书写入使用**独占创建**（文件已存在 = 该任务已启动，禁止覆盖）；与启动锁配合防止多项目并发踩踏。
 
 ## 角色清单

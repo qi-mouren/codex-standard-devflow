@@ -54,7 +54,7 @@
 14. 禁止递归：子 agent 任务书显式禁止 spawn 子 agent、禁止按总控角色行动；需要独立验证 agent 时由 QA 上报总控创建。
 15. 规范路径：spawn/消息目标一律用完整规范路径（如 /root/<task_name>），不使用裸相对名。
 16. 复述核验：主控必须核对子 agent 首轮输出包含任务文件复述；首轮无复述即视为投递失败，interrupt 并重试（≤2 次）。任务文件缺失时子 agent 禁止猜测，必须上报。
-17. 启动抢锁：spawn 前运行 scripts/acquire-launch-lock.ps1（全局跨项目互斥，锁目录 C:\tmp\standard-devflow-locks 或 %TEMP%）；抢锁失败重试 ≤2 次后上报，禁止强行继续；spawn 投递完成后运行 release-launch-lock.ps1 释放。
+17. 启动检查（数量 + 锁）：spawn 前先 list_agents 查当前存活 agent 数（含主控），再运行 scripts/acquire-launch-lock.ps1 -ActiveAgentCount <N> -MaxConcurrentThreads <M>：脚本在锁内校验槽位（N < M），exit 3=槽位不足（不持锁）、exit 2=锁被占用超时；均重试 ≤2 次后上报，禁止强行继续；spawn 投递完成后运行 release-launch-lock.ps1 释放。
 18. 任务书防重：任务书写入用独占创建；已存在即任务已启动，禁止覆盖，改新 task_name 或上报总控。
 
 ## 状态持久化

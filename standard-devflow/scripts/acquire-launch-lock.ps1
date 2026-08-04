@@ -6,6 +6,8 @@
 param(
     [Parameter(Mandatory = $true)][string]$ProjectPath,
     [Parameter(Mandatory = $true)][string]$TaskName,
+    [Parameter(Mandatory = $true)][int]$ActiveAgentCount,
+    [int]$MaxConcurrentThreads = 7,
     [int]$TimeoutSeconds = 30,
     [int]$LockTtlMinutes = 10
 )
@@ -46,7 +48,13 @@ while ($true) {
             $bytes = [System.Text.Encoding]::UTF8.GetBytes($lock)
             $fs.Write($bytes, 0, $bytes.Length)
         } finally { $fs.Close() }
-        Write-Host "acquired: $lockFile"
+        # 槽位校验（锁内执行，避免并发竞态）：已有数量必须小于总线程上限
+        if ($ActiveAgentCount -ge $MaxConcurrentThreads) {
+            Remove-Item -LiteralPath $lockFile -Force
+            Write-Host "slot insufficient: active=$ActiveAgentCount max=$MaxConcurrentThreads (含主控)" -ForegroundColor Yellow
+            exit 3
+        }
+        Write-Host "acquired: $lockFile (active=$ActiveAgentCount max=$MaxConcurrentThreads)"
         exit 0
     } catch [System.IO.IOException] {
         $existing = if (Test-Path $lockFile) { Get-Content $lockFile -Raw -ErrorAction SilentlyContinue } else { $null }
