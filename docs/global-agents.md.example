@@ -1,0 +1,6 @@
+# 全局规则（所有项目、所有会话）
+
+- 标准开发流程见 skill: standard-devflow。开始新项目/新史诗、蒸馏需求、写 PRD/HLD/LLD、拆解模块、冻结契约、跑门禁 G0-G5 时，使用该 skill。
+- 流程规则与模板一律来自该 skill，禁止在项目内复制整套流程。
+- 项目 AGENTS.md 只写身份：产品名、当前史诗、STATE 指针（docs/process/STATE.md）。
+- 新会话第一件事：读项目 docs/process/STATE.md（如存在），必要时跑 skill 的 scripts/check-flow.ps1。
