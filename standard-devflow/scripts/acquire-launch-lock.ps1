@@ -1,7 +1,7 @@
-# acquire-launch-lock.ps1 - 全局启动锁（跨项目互斥）
-# 用法: ./acquire-launch-lock.ps1 -ProjectPath <项目路径> -TaskName <task_name> [-TimeoutSeconds 30]
-# 锁目录: C:\tmp\standard-devflow-locks（本环境共享），不可用时回退 %TEMP%\standard-devflow-locks
-# 退出码: 0=抢锁成功 | 2=超时/被占用
+﻿# acquire-launch-lock.ps1 - 全局启动锁（跨项目互斥）
+# 用法: ./acquire-launch-lock.ps1 -ProjectPath <项目路径> -TaskName <task_name> -ActiveAgentCount <N> [-MaxConcurrentThreads <M>] [-TimeoutSeconds 30]
+# 退出码: 0=抢锁成功 | 2=锁被占用超时 | 3=槽位不足（不持锁）
+# 说明: 锁的持有者是"项目+任务"而非进程；stale 只按 TTL 判定（进程退出不影响锁），释放走 release 脚本。
 
 param(
     [Parameter(Mandatory = $true)][string]$ProjectPath,
@@ -27,10 +27,8 @@ function Test-Stale($content) {
     try {
         $j = $content | ConvertFrom-Json
         $age = (Get-Date) - ([datetime]$j.timestamp)
-        if ($age.TotalMinutes -gt $LockTtlMinutes) { return $true }
-        if ($j.pid -and -not (Get-Process -Id ([int]$j.pid) -ErrorAction SilentlyContinue)) { return $true }
+        return $age.TotalMinutes -gt $LockTtlMinutes
     } catch { return $true }
-    return $false
 }
 
 $lock = @{
@@ -48,7 +46,6 @@ while ($true) {
             $bytes = [System.Text.Encoding]::UTF8.GetBytes($lock)
             $fs.Write($bytes, 0, $bytes.Length)
         } finally { $fs.Close() }
-        # 槽位校验（锁内执行，避免并发竞态）：已有数量必须小于总线程上限
         if ($ActiveAgentCount -ge $MaxConcurrentThreads) {
             Remove-Item -LiteralPath $lockFile -Force
             Write-Host "slot insufficient: active=$ActiveAgentCount max=$MaxConcurrentThreads (含主控)" -ForegroundColor Yellow

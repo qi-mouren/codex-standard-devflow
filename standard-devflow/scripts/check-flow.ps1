@@ -1,4 +1,4 @@
-# check-flow.ps1 - 标准开发流程健康检查
+﻿# check-flow.ps1 - 标准开发流程健康检查
 # 用法: ./check-flow.ps1 -ProjectPath <项目路径>
 # 检查: 目录结构、门禁产物、tag 状态、追踪矩阵完整性
 
