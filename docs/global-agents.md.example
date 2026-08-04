@@ -4,3 +4,4 @@
 - 流程规则与模板一律来自该 skill，禁止在项目内复制整套流程。
 - 项目 AGENTS.md 只写身份：产品名、当前史诗、STATE 指针（docs/process/STATE.md）。
 - 新会话第一件事：读项目 docs/process/STATE.md（如存在），必要时跑 skill 的 scripts/check-flow.ps1。
+- 多 agent 任务必须按 standard-devflow 显式 spawn 子 agent（架构评审员、模块设计员、模块开发员、QA 评审员）；进入对应阶段立即创建，不得默认串行。

@@ -1,4 +1,4 @@
 interface:
   display_name: "标准开发流程"
-  short_description: "大型项目标准开发流程：需求蒸馏、产品需求、架构设计、模块拆解、详细设计、契约与门禁"
+  short_description: "大型项目标准开发流程：需求、架构、拆解、详细设计、契约、实现与门禁，强制子 agent 并行编排"
   default_prompt: "Use $standard-devflow to run the standard development workflow for a new epic, from requirement distillation to integration."
