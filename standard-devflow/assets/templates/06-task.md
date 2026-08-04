@@ -4,6 +4,7 @@
 - 创建时间：yyyy-mm-dd
 - 创建者：总控负责人
 - 任务文件路径：docs/process/tasks/<task_name>.md
+- 禁止：spawn 任何子 agent；按总控角色行动（需要额外 agent 时上报总控）
 
 ## 任务
 
