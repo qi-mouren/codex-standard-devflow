@@ -47,7 +47,7 @@ Get-ChildItem -LiteralPath $src | ForEach-Object { Copy-Item -LiteralPath $_.Ful
 ### 方式 B：使用 skill-installer
 
 ```powershell
-python "$env:CODEX_HOME\skills\.system\skill-installer\scripts\install-skill-from-github.py" <本仓库 GitHub 地址> --path skills/standard-devflow
+python "$env:CODEX_HOME\skills\.system\skill-installer\scripts\install-skill-from-github.py" https://github.com/qi-mouren/codex-standard-devflow --path skills/standard-devflow
 ```
 
 ### 校验
