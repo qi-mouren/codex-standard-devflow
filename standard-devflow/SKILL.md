@@ -46,6 +46,7 @@ description: 大型项目标准开发流程：需求蒸馏、产品需求（PRD�
 - 史诗/模块/里程碑切分：`references/splitting.md`
 - Git 分支与 tag 规范：`references/git-flow.md`
 - 环境适配与子 agent 执行协议：`references/environment-adaptation.md`
+- 角色卡素材（社区 MIT，原文）：`assets/role-cards/`；提炼速查：`references/role-cards.md`
 
 ## 子 Agent 强制规则
 
@@ -66,7 +67,7 @@ description: 大型项目标准开发流程：需求蒸馏、产品需求（PRD�
 
 - 默认每轮只 spawn 1 个子 agent，完成后 interrupt 回收再开下一个；确需并行每批 ≤2~3 个且按剩余槽位。
 - 任务书固定写入 `docs/process/tasks/current.md`，spawn 消息只写"读 current.md 执行任务"。
-- 子 agent 心跳：每完成一个工具步骤或最多每 60 秒一次（带 `-Note`）；spawn 后 90 秒无首心跳即预警；超 3 分钟无心跳且无产出 = 卡死，interrupt + 重试 ≤2 次 + 上报。
+- 子 agent 心跳：每完成一个工具步骤或最多每 60 秒一次（带 `-Note`）；预计超过 60 秒的长命令开始前先发 `LONG:` 心跳、结束后补发；spawn 后 3 分钟无首心跳预警、8 分钟无心跳且无产出才判卡死；interrupt 前必须重读 `.heartbeat` 并做全仓最近 2 分钟变更扫描，任一新鲜即不得打断。
 - task_name 只允许小写字母/数字/下划线；每轮结束必须 interrupt 回收（槽位不自动释放）。
 - 子 agent 禁止再 spawn；总控每个调度动作必须 record-event 落调度账，复盘跑 analyze-flow.ps1。
 ## 角色清单

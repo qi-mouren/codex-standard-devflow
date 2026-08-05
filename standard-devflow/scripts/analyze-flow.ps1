@@ -148,7 +148,9 @@ foreach ($runName in ($runs.Keys | Sort-Object)) {
     $hbs = $runs[$runName]
     for ($i = 1; $i -lt $hbs.Count; $i++) {
         $gap = (([datetime]$hbs[$i].ts) - ([datetime]$hbs[$i-1].ts)).TotalSeconds
-        if ($gap -gt 120) {
+        $prevNote = [string]$hbs[$i-1].note
+        $prevLong = $prevNote.StartsWith("LONG:", [System.StringComparison]::OrdinalIgnoreCase)
+        if ($gap -gt 120 -and -not $prevLong) {
             $anomalies += "${runName}: 心跳间隔过大 " + [math]::Round($gap,0) + " 秒 (" + ([datetime]$hbs[$i-1].ts).ToString('HH:mm:ss') + " -> " + ([datetime]$hbs[$i].ts).ToString('HH:mm:ss') + ")"
         }
     }

@@ -89,15 +89,26 @@ if (Test-Path $gitDir) {
     Write-Host "[..] 未检测到 .git，跳过 tag 检查" -ForegroundColor DarkGray
 }
 
-# 6. 心跳检查
+# 6. 心跳检查（阈值参数化：预警 3 分钟 / 判死 8 分钟 / LONG 长命令宽限 15 分钟）
 $tasksDir = Join-Path $procDir "tasks"
 $hbFile = Join-Path $tasksDir ".heartbeat"
+$hbWarnMin = 3
+$hbKillMin = 8
+$hbLongMin = 15
 if (Test-Path $hbFile) {
     try {
         $hb = Get-Content $hbFile -Raw | ConvertFrom-Json
         $ageMin = ((Get-Date) - ([datetime]$hb.timestamp)).TotalMinutes
-        if ($ageMin -gt 3) { Write-Issue "心跳过期: $([math]::Round($ageMin,1)) 分钟前更新 ($($hb.task))" }
-        else { $note = if ($hb.note) { " - $($hb.note)" } else { "" }; Write-Ok "心跳正常: $([math]::Round($ageMin,1)) 分钟前更新 ($($hb.task)$note)" }
+        $isLong = ($hb.note -and $hb.note.StartsWith("LONG:", [System.StringComparison]::OrdinalIgnoreCase))
+        $limitMin = if ($isLong) { $hbLongMin } else { $hbKillMin }
+        if ($ageMin -gt $limitMin) {
+            Write-Issue "心跳过期: $([math]::Round($ageMin,1)) 分钟前更新 ($($hb.task)$(if ($isLong) { ', LONG 宽限' } else { '' }))"
+        } elseif ($ageMin -gt $hbWarnMin) {
+            Write-Host "[..] 心跳偏旧(预警): $([math]::Round($ageMin,1)) 分钟前更新 ($($hb.task)$(if ($isLong) { ' - LONG' } else { '' }))" -ForegroundColor Yellow
+        } else {
+            $note = if ($hb.note) { " - $($hb.note)" } else { "" }
+            Write-Ok "心跳正常: $([math]::Round($ageMin,1)) 分钟前更新 ($($hb.task)$note)"
+        }
     } catch { Write-Issue "心跳文件无法解析: $hbFile" }
 } else {
     Write-Host "[..] 无心跳文件（尚未启动子 agent 或已清理）" -ForegroundColor DarkGray
