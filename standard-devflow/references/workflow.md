@@ -34,28 +34,15 @@
 
 所有回退都走 Git：驳回 = MR 不合并/关闭；变更 = 从冻结 tag 拉新分支。
 
-## 子 Agent 编排（文件式协议，最终方案）
+## 子 Agent 编排
 
 以下工作必须由子 agent 执行，主会话（总控负责人）只做编排、门禁与 STATE 同步：
 
-1. 串行轮次：默认每轮只 spawn 1 个子 agent，完成后 interrupt 回收再开下一个；确需并行时每批 ≤2~3 个且按剩余槽位。
-2. 任务书唯一化：每轮把任务正文覆盖写入 docs/process/tasks/current.md（模板 assets/templates/06-task.md），不含 task_name；子 agent 一律读 current.md。
-3. 兜底查找：README 与 STATE.md 写明"当前任务 = docs/process/tasks/current.md"；子 agent 找不到时先查 STATE.md/README，仍无则上报，禁止猜测。
-4. 预审放行：总控 spawn 前预审 current.md（任务、输入、输出、完成标准、禁止项）完整可执行；子 agent 读取并引用"任务"段原文复述后直接开工，不等待总控确认（确认通道不可靠，等待会死锁）。
-5. spawn 消息只写"读 docs/process/tasks/current.md 执行任务"（双保险）。
-6. 心跳与超时：子 agent 每完成一个工具步骤或最多每 60 秒调用 scripts/update-heartbeat.ps1 -ProjectPath <项目> -LogFile docs/process/logs/runs/run-<N>.jsonl -Note "<正在做什么>"，写 .heartbeat 快照并追加执行账（note 必须写当前动作，总控据此区分长任务与卡死）；总控每轮检查：spawn 后 90 秒内应出现首条心跳，未见提前预警/准备重试；超过 3 分钟无心跳且无产出变更 = 卡死，interrupt + 重试 ≤2 次 + 上报；心跳在更新 = 合法长任务，不打断。
-7. 生命周期与命名：task_name 只允许小写字母/数字/下划线（如 mod01_r1、mod02_20260805，连字符被校验拒绝）；同名残留换新名，禁止同名重 spawn；总控用 list_agents 核对，完成/卡死 agent 一律 interrupt 回收（官方 issue #13947：agent 完成/中断后不会自动释放槽位，不回收会泄漏）。
-8. 禁止递归：任务书显式禁止 spawn 子 agent、禁止按总控角色行动；需要额外验证 agent 时上报总控创建。
-9. 失败上限：spawn/投递失败最多重试 2 次，仍失败暂停上报用户，禁止主会话代做。
-10. 数量 + 锁：spawn 前 list_agents 查存活数，再 acquire-launch-lock.ps1（锁内槽位校验，exit 2/3 重试 ≤2 次后上报）；投递完成后 release-launch-lock.ps1 -ProjectPath <项目> -TaskName <task_name> 释放。
-11. 规范路径：spawn/消息目标用完整规范路径（如 /root/<task_name>），不用裸相对名。
-12. 子 agent 产出后，主会话先做形式校验，再更新 STATE/追踪矩阵，最后推进门禁。
-13. 交接物 = 文件路径 + 一页摘要，禁止传递全部历史上下文。
-14. 新会话第一件事：读 docs/process/STATE.md，再跑 check-flow.ps1。
-15. G5 独立补验：模块已实现、仅需验证的场景，QA 评审员上报总控，由总控用新 task_name 创建独立验证 agent 补跑，并纳入 QA 报告。
-16. 环境约束说明：消息正文/确认通道经代理不可靠（encrypted_content 被丢弃、无可靠 task_name），本协议不依赖它们；这是当前环境的既定约束，不是可选项。
-17. 工作目录（cwd）规则：子 agent 继承父会话 cwd；spawn 前确认当前会话 cwd = 项目根目录（Get-Location），否则子 agent 找不到任务书/产物；切换项目先开新会话再 spawn。
-18. 运行监控（两本账）：总控每个调度动作用 record-event.ps1 追加 docs/process/logs/orchestration.jsonl（taskbook_write / lock_acquire / lock_release / spawn_start / spawn_success / spawn_fail / interrupt / gate / state_update / user_decision），必须带 -Run run-<N> 关联轮次；子 agent 心跳追加 docs/process/logs/runs/run-<N>.jsonl；复盘跑 analyze-flow.ps1 生成时间线与异常清单（如 spawn 后无首心跳、心跳间隔过大、spawn 后无 interrupt 槽位未回收）。日志策略：调度账随项目提交，runs/ 量大建议 gitignore（示例 assets/templates/gitignore-logs.example）。
+- 执行协议（任务书 current.md、心跳/超时、锁、回收、监控）与全部环境适配规则：`references/environment-adaptation.md`，进入子 agent 阶段前先读。
+- 子 agent 产出后，主会话先做形式校验，再更新 STATE/追踪矩阵，最后推进门禁。
+- 交接物 = 文件路径 + 一页摘要，禁止传递全部历史上下文。
+- 新会话第一件事：读 docs/process/STATE.md，再跑 check-flow.ps1。
+- G5 独立补验：模块已实现、仅需验证的场景，QA 评审员上报总控，由总控用新 task_name 创建独立验证 agent 补跑，并纳入 QA 报告。
 ## 状态持久化
 
 | 内容 | 位置 | 维护者 |

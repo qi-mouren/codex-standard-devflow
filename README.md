@@ -11,6 +11,7 @@
 5. **冻结与变更分离**：契约冻结后禁止原地修改，变更走版本升级。
 6. **零复制安装**：做成 Codex skill，一次安装、所有项目可用。
 7. **子 Agent 强制编排（文件式协议）**：详细设计/开发实现/G2/G5 必须 spawn 子 agent（模块设计员、模块开发员、架构评审员、QA 评审员）；任务书唯一化 current.md + README/STATE 兜底、spawn 消息只给路径、任务书预审放行（复述后直接开工）、60 秒心跳带进度 note + 3 分钟超时判卡死（spawn 后 90 秒无首心跳即预警）、默认每轮单 agent 串行；失败不超过 2 次即上报；spawn 前 list_agents 查数量 + 抢全局启动锁并在锁内校验槽位（32G 内存推荐 [agents] max_concurrent_threads_per_session = 6，共 7 线程，改后重启生效），task_name 只允许小写字母/数字/下划线（如 mod01_r1），spawn 前确认 cwd = 项目根目录，每轮结束 interrupt 回收槽位（agent 完成不会自动释放），子 agent 禁止递归再 spawn，主会话只做编排与门禁。调度与执行全程落盘运行日志（orchestration.jsonl 调度账 + runs/ 执行账），可运行 scripts/analyze-flow.ps1 复盘时间线与异常。
+8. **核心与适配分层**：流程阶段、门禁、角色、红线是核心层，除非需求变化否则冻结；环境/平台补偿规则（文件式协议、锁、心跳、监控）独立成册于 references/environment-adaptation.md，后续环境问题只改该层与 scripts/，平台修复后可整层摘除，核心不动。
 
 ## 流程一览
 
@@ -79,7 +80,8 @@ standard-devflow/
 │   ├── roles.md              # 全部角色提示词
 │   ├── gates.md              # 门禁 G0-G5 检查表与 owner
 │   ├── splitting.md          # 史诗/模块/里程碑切分
-│   └── git-flow.md           # Git 分支/tag/MR 规范
+│   ├── git-flow.md           # Git 分支/tag/MR 规范
+│   └── environment-adaptation.md # 环境适配层（唯一随环境演进的流程文件）
 ├── assets/templates/         # 8 个产物模板
 └── scripts/
     ├── check-flow.ps1        # 流程健康检查
