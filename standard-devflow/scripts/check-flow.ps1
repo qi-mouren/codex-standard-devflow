@@ -109,6 +109,14 @@ if (Test-Path $traceFile) {
     if ($trace -match "\| REQ-\d+") { Write-Ok "追踪矩阵含 REQ 条目" } else { Write-Issue "追踪矩阵无 REQ 条目" }
 }
 
+# 8. 运行日志（可选，未启用不算问题）
+$logsDir = Join-Path $procDir "logs"
+if (Test-Path $logsDir) {
+    if (Test-Path (Join-Path $logsDir "orchestration.jsonl")) { Write-Ok "调度账存在 (orchestration.jsonl)" } else { Write-Host "[..] 调度账缺失（尚未记录调度事件）" -ForegroundColor DarkGray }
+} else {
+    Write-Host "[..] 无 logs 目录（尚未启用运行监控或已清理）" -ForegroundColor DarkGray
+}
+
 Write-Host "`n==============================" -ForegroundColor Cyan
 if ($issues.Count -eq 0) {
     Write-Host "流程健康检查通过 ($okCount 项 OK)" -ForegroundColor Green

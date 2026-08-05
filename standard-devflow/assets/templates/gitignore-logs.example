@@ -1,0 +1,4 @@
+# standard-devflow 运行日志策略
+# 调度账（orchestration.jsonl）建议提交：量小、可复盘调度过程
+# 执行账（runs/）建议忽略：心跳 60 秒一条，量大且噪音
+docs/process/logs/runs/

@@ -30,7 +30,13 @@
 ## 开工方式
 
 - 读取本文件 → 引用「任务」段原文复述 → 直接开工（不等待总控确认）
-- 每完成一个工具步骤或最多每 60 秒运行 scripts/update-heartbeat.ps1 -ProjectPath <项目路径> -TaskName <你的 task_name> -Note "<正在做什么>"
+- 每完成一个工具步骤或最多每 60 秒运行 scripts/update-heartbeat.ps1 -ProjectPath <项目路径> -LogFile <下方"运行日志"指定的路径> -Note "<正在做什么>"
+
+## 运行日志（本轮）
+
+- 本轮日志文件：docs/process/logs/runs/run-<N>.jsonl
+- 心跳命令：scripts/update-heartbeat.ps1 -ProjectPath <项目路径> -LogFile docs/process/logs/runs/run-<N>.jsonl -Note "<正在做什么>"
+- 每完成一个工具步骤或最多每 60 秒运行一次；总控据此判断你是否在干活。
 
 ## 上下文摘要（一页）
 
