@@ -1,12 +1,9 @@
-# 子 Agent 任务书（<task_name>）
+# 子 Agent 任务书（current.md）
 
 - 角色：架构评审员 / 模块设计员 / 模块开发员 / QA 评审员
 - 创建时间：yyyy-mm-dd
 - 创建者：总控负责人
-- 任务文件路径：docs/process/tasks/<task_name>.md
-- 自发现路径：从消息壳 Task name 解析（取路径最后一段），找到本文件后引用「任务」段原文复述
-- 禁止：spawn 任何子 agent；按总控角色行动（需要额外 agent 时上报总控）
-- 读取后复述必须引用本文件「任务」段原文；文件缺失/无法读取时立即上报，禁止猜测或自行推断任务
+- 说明：本文件固定为 docs/process/tasks/current.md；子 agent 无需知道自己的 task_name，一律读本文件。
 
 ## 任务
 
@@ -24,6 +21,16 @@
 
 - [ ] 标准 1
 - [ ] 标准 2
+
+## 禁止
+
+- spawn 任何子 agent；按总控角色行动（需要额外 agent 时上报总控）
+- 猜测或自行推断任务（文件缺失/无法读取时立即上报）
+
+## 开工方式
+
+- 读取本文件 → 引用「任务」段原文复述 → 直接开工（不等待总控确认）
+- 每完成一个工具步骤或最多每 5 分钟运行 scripts/update-heartbeat.ps1 -ProjectPath <项目路径> -TaskName <你的 task_name>
 
 ## 上下文摘要（一页）
 

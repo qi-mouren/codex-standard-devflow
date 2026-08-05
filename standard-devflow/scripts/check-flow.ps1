@@ -89,7 +89,21 @@ if (Test-Path $gitDir) {
     Write-Host "[..] 未检测到 .git，跳过 tag 检查" -ForegroundColor DarkGray
 }
 
-# 6. 追踪矩阵完整性
+# 6. 心跳检查
+$tasksDir = Join-Path $procDir "tasks"
+$hbFile = Join-Path $tasksDir ".heartbeat"
+if (Test-Path $hbFile) {
+    try {
+        $hb = Get-Content $hbFile -Raw | ConvertFrom-Json
+        $ageMin = ((Get-Date) - ([datetime]$hb.timestamp)).TotalMinutes
+        if ($ageMin -gt 10) { Write-Issue "心跳过期: $([math]::Round($ageMin,1)) 分钟前更新 ($($hb.task))" }
+        else { Write-Ok "心跳正常: $([math]::Round($ageMin,1)) 分钟前更新 ($($hb.task))" }
+    } catch { Write-Issue "心跳文件无法解析: $hbFile" }
+} else {
+    Write-Host "[..] 无心跳文件（尚未启动子 agent 或已清理）" -ForegroundColor DarkGray
+}
+
+# 7. 追踪矩阵完整性
 if (Test-Path $traceFile) {
     $trace = Get-Content $traceFile -Encoding UTF8 -Raw
     if ($trace -match "\| REQ-\d+") { Write-Ok "追踪矩阵含 REQ 条目" } else { Write-Issue "追踪矩阵无 REQ 条目" }

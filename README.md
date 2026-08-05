@@ -10,7 +10,7 @@
 4. **产出的节点不能当自己的裁判**：每道门禁由上级、独立评审或人类把关。
 5. **冻结与变更分离**：契约冻结后禁止原地修改，变更走版本升级。
 6. **零复制安装**：做成 Codex skill，一次安装、所有项目可用。
-7. **子 Agent 强制编排**：详细设计/开发实现/G2/G5 必须 spawn 子 agent（模块设计员、模块开发员、架构评审员、QA 评审员）；任务正文先落盘为任务文件（按 task_name 命名）、子 agent 从消息壳 Task name 自发现后复述确认，失败不超过 2 次即上报；spawn 前 list_agents 查数量 + 抢全局启动锁并在锁内校验槽位、任务书独占创建；一批并行 spawn 不超过剩余并发槽位（默认 3；32G 内存推荐 [agents] max_concurrent_threads_per_session = 6，共 7 线程，改后重启生效），子 agent 禁止递归再 spawn，主会话只做编排与门禁。
+7. **子 Agent 强制编排（文件式协议）**：详细设计/开发实现/G2/G5 必须 spawn 子 agent（模块设计员、模块开发员、架构评审员、QA 评审员）；任务书唯一化 current.md + README/STATE 兜底、spawn 消息只给路径、任务书预审放行（复述后直接开工）、心跳超时防卡死、默认每轮单 agent 串行；失败不超过 2 次即上报；spawn 前 list_agents 查数量 + 抢全局启动锁并在锁内校验槽位（32G 内存推荐 [agents] max_concurrent_threads_per_session = 6，共 7 线程，改后重启生效），子 agent 禁止递归再 spawn，主会话只做编排与门禁。
 
 ## 流程一览
 

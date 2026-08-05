@@ -53,25 +53,28 @@ description: 大型项目标准开发流程：需求蒸馏、产品需求（PRD�
 | 阶段/门禁 | 必须 spawn 的子 agent | 数量 | 提示词来源 |
 |---|---|---|---|
 | G2 架构评审 | 架构评审员 | 1 个 | references/roles.md |
-| 详细设计 | 模块设计员 | 每模块 1 个，并行 | references/roles.md |
-| 开发实现 | 模块开发员 | 每模块 1 个，按依赖并行 | references/roles.md |
+| 详细设计 | 模块设计员 | 每模块 1 个 | references/roles.md |
+| 开发实现 | 模块开发员 | 每模块 1 个 | references/roles.md |
 | G5 集成/QA | QA 评审员 | 1 个（不得由开发相关 agent 担任） | references/roles.md |
 
-规则：
+### 环境约束（必须遵守，勿再尝试消息制）
 
-1. spawn 时机：进入对应阶段/门禁时**立即创建**，不等用户提醒。
-2. 任务落盘（自发现协议）：spawn 前主控把任务正文写入 `docs/process/tasks/<task_name>.md`（模板见 `assets/templates/06-task.md`），**任务书文件名必须等于 spawn 的 task_name（取路径最后一段）**。spawn 消息正文仍写"读 <任务文件路径> 执行任务"作为双保险；已知部分环境下消息正文不可达，子 agent 仅凭消息壳中的 Task name 也能定位任务书。
-3. 任务确认（自发现）：子 agent 第一步**从消息壳解析 Task name → 读取 `docs/process/tasks/<task_name>.md` → 引用任务书"任务"段原文复述**（任务内容、输入/输出路径、完成标准），总控确认无误后才放行开工。查找顺序：消息壳 Task name → 固定约定路径 → STATE/README 兜底说明；全部缺失或无法读取时立即上报，**禁止猜测或自行推断任务**。子 agent 首轮输出不含任务复述＝投递失败，主控立即 interrupt 并重试（≤2 次）。
-4. 失败上限：spawn/投递失败**最多重试 2 次**；仍失败必须暂停上报用户，**禁止主会话代做**该子 agent 的工作。
-5. 上下文：spawn 消息只传"角色提示词 + 任务文件路径"，禁止传全部历史上下文。
-6. 子 agent 产出后，主会话做形式校验、更新 STATE/追踪矩阵，再推进门禁。
-7. 若当前环境不支持 spawn（无多 agent 工具），**必须暂停并告知用户**，禁止默默串行。
-8. 并发容量：并发槽位以当前环境为准。默认 4 含主会话（同时最多 3 个子 agent）；32G 内存机器推荐 `[agents] max_concurrent_threads_per_session = 6`（6 子 agent + 主会话共 7 线程）。配置在会话启动时锁定，**改后必须重启 Codex 新开会话生效**；新会话提示应为 "7 available concurrency slots"。总线程不要到 8（会触发费用警告）。一批并行 spawn **不超过剩余槽位**（建议 2~3 个；编译型任务并发 ≤3），进入下一批前确认上一批已完成或已关闭。
-9. 禁止递归：子 agent **禁止再 spawn 子 agent、禁止按总控角色行动**；需要额外验证 agent 时上报总控，由总控创建。
-10. 规范路径：spawn/消息目标一律用**完整规范路径**（如 `/root/<task_name>`），不使用裸相对名。
-11. 启动检查（数量 + 锁）：每次 spawn 子 agent 前，主控**先 list_agents 查当前存活 agent 数（含主控）**，再运行 `scripts/acquire-launch-lock.ps1 -ProjectPath <项目路径> -TaskName <task_name> -ActiveAgentCount <N> -MaxConcurrentThreads <M>`：脚本在**锁内**校验槽位（N 必须 < M，M 为总线程数含主控，默认 7），槽位不足返回 exit 3 且不持锁；锁被占用超时返回 exit 2。两者都不得强行继续：重试 ≤2 次后上报用户。spawn 投递完成后立即调用 `scripts/release-launch-lock.ps1` 释放。
-12. 任务书防重：任务书写入使用**独占创建**（文件已存在 = 该任务已启动，禁止覆盖）；与启动锁配合防止多项目并发踩踏。
+本环境的子 agent 消息通道不可靠：spawn/followup 消息正文经 encrypted_content 被代理丢弃（正文与确认都送不到）、agent 上下文中无可靠 task_name、已完成 agent 残留占路径。**协议一律不依赖消息正文、不依赖 task_name、不依赖确认回执**，改用以下文件式协议。
 
+### 协议（文件式，最终方案）
+
+1. **串行轮次**：默认**每轮只 spawn 1 个子 agent**（单 agent 串行），完成后回收再开下一个。确需并行时每批 ≤2~3 个且按剩余槽位。串行是当前环境的可靠基线，并行只是可选加速。
+2. **任务书唯一化**：任务书固定写入 `docs/process/tasks/current.md`（模板 `assets/templates/06-task.md`，每轮覆盖，不含 task_name）。子 agent **无需知道自己的名字**，一律读 current.md。
+3. **兜底查找**：README 与 STATE.md 写明"当前任务 = docs/process/tasks/current.md"；子 agent 找不到 current.md 时先查 STATE.md/README，仍无则上报，**禁止猜测**。
+4. **预审放行**：总控在 spawn 前**预审 current.md**（任务、输入、输出、完成标准、禁止项完整可执行）后才 spawn；子 agent 读取 current.md、引用"任务"段原文复述后**直接开工**，**不再等待总控确认**（确认通道不可靠，等待会死锁）。
+5. **spawn 消息只写路径**："读 docs/process/tasks/current.md 执行任务"（双保险；正文不可达时靠第 2/3 条兜底）。
+6. **心跳与超时**：子 agent 每完成一个工具步骤或最多每 5 分钟调用 `scripts/update-heartbeat.ps1 -ProjectPath <项目> -TaskName <task_name>` 更新 `docs/process/tasks/.heartbeat`。总控每次检查：**超过 10 分钟无心跳且无产出变更 = 判定卡死**，interrupt 并重试（≤2 次）后上报；心跳在更新 = 合法长任务，不得打断。
+7. **生命周期与命名**：task_name 带轮次/日期后缀（如 `mod01-r1`）；同名残留时换新名，**禁止同名重 spawn**（会报 agent path already exists）；总控用 list_agents 核对，已完成/卡死 agent 一律 interrupt 回收后再进下一轮。
+8. **禁止递归**：任务书显式写"禁止 spawn 子 agent、禁止按总控角色行动"；需要额外验证 agent 时上报总控，由总控创建。
+9. **失败上限**：spawn/投递失败**最多重试 2 次**；仍失败必须暂停上报用户，**禁止主会话代做**该子 agent 的工作。
+10. **数量 + 锁**：spawn 前先 list_agents 查存活 agent 数（含主控），再运行 `scripts/acquire-launch-lock.ps1 -ProjectPath <项目> -TaskName <task_name> -ActiveAgentCount <N> -MaxConcurrentThreads <M>`（默认 M=7）：exit 2=锁占用、exit 3=槽位不足，均重试 ≤2 次后上报，禁止强行 spawn；投递完成后 `scripts/release-launch-lock.ps1` 释放。
+11. **规范路径**：spawn/消息目标一律用完整规范路径（如 `/root/<task_name>`），不使用裸相对名。
+12. **并发容量**：并发槽位以环境为准（默认 4 含主控；32G 内存推荐 agents=6 共 7 线程；改后重启生效；总线程不要到 8）。
 ## 角色清单
 
 | 角色 | 职责 | 产出 |

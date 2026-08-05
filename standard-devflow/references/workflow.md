@@ -34,29 +34,26 @@
 
 所有回退都走 Git：驳回 = MR 不合并/关闭；变更 = 从冻结 tag 拉新分支。
 
-## 子 Agent 编排（多 agent 环境）
+## 子 Agent 编排（文件式协议，最终方案）
 
 以下工作必须由子 agent 执行，主会话（总控负责人）只做编排、门禁与 STATE 同步：
 
-1. 详细设计阶段：详细设计负责人按模块 spawn 模块设计员子 agent（并行），只传「模块范围 + LLD 规范 + 模板路径」。
-2. 开发实现阶段：开发负责人按依赖顺序 spawn 模块开发员子 agent（无依赖模块并行），只传「冻结契约 + 模块 LLD 路径」。
-3. G2：总控负责人 spawn 架构评审员子 agent，产出独立评审报告后才能签字。
-4. G5：总控负责人 spawn QA 评审员子 agent（不得由开发相关 agent 担任），产出 QA 报告后才能放行。
-5. 子 agent 产出后，主会话先做形式校验，再更新 STATE/追踪矩阵，最后推进门禁。
-6. 若环境不支持 spawn，必须暂停并告知用户，禁止默默串行。
-7. 交接物 = 文件路径 + 一页摘要，禁止传递全部历史上下文。
-8. 新会话第一件事：读 docs/process/STATE.md，再跑 check-flow.ps1。
-9. 任务确认：每个子 agent spawn 后第一步必须复述任务（任务内容、输入/输出路径、完成标准），总控确认后才放行开工。
-10. 失败处理：spawn/投递失败最多重试 2 次，仍失败暂停上报用户，禁止代做。
-11. G5 独立补验：模块已实现、仅需验证的场景，QA 评审员上报总控，由总控用新 task_name 创建独立验证 agent 补跑，并纳入 QA 报告。
-12. 任务文件机制（自发现协议）：spawn 前主控把任务正文写入 docs/process/tasks/<task_name>.md（模板 assets/templates/06-task.md），文件名必须等于 spawn 的 task_name（取路径最后一段）。spawn 消息正文照写"读 <路径> 执行任务"作为双保险；已知部分环境下消息正文不可达（被代理丢弃），子 agent 必须能仅凭消息壳中的 Task name 定位任务书。查找顺序：Task name → 固定约定路径 → STATE/README 兜底；找不到即上报，禁止猜测。
-13. 并发容量：并发槽位以当前环境为准（默认 4 含主会话；32G 内存推荐 [agents] max_concurrent_threads_per_session = 6，即 6 子 agent + 主会话共 7 线程）。配置在会话启动时锁定，改后必须重启 Codex 新开会话生效；新会话提示应为 "7 available concurrency slots"。总线程不要到 8（触发费用警告）。一批并行 spawn 不超过剩余槽位（建议 2~3 个；编译型任务并发 ≤3），进入下一批前确认上一批完成或已关闭。
-14. 禁止递归：子 agent 任务书显式禁止 spawn 子 agent、禁止按总控角色行动；需要独立验证 agent 时由 QA 上报总控创建。
-15. 规范路径：spawn/消息目标一律用完整规范路径（如 /root/<task_name>），不使用裸相对名。
-16. 复述核验：主控必须核对子 agent 首轮输出包含任务文件复述；首轮无复述即视为投递失败，interrupt 并重试（≤2 次）。任务文件缺失时子 agent 禁止猜测，必须上报。
-17. 启动检查（数量 + 锁）：spawn 前先 list_agents 查当前存活 agent 数（含主控），再运行 scripts/acquire-launch-lock.ps1 -ActiveAgentCount <N> -MaxConcurrentThreads <M>：脚本在锁内校验槽位（N < M），exit 3=槽位不足（不持锁）、exit 2=锁被占用超时；均重试 ≤2 次后上报，禁止强行继续；spawn 投递完成后运行 release-launch-lock.ps1 释放。
-18. 任务书防重：任务书写入用独占创建；已存在即任务已启动，禁止覆盖，改新 task_name 或上报总控。
-
+1. 串行轮次：默认每轮只 spawn 1 个子 agent，完成后 interrupt 回收再开下一个；确需并行时每批 ≤2~3 个且按剩余槽位。
+2. 任务书唯一化：每轮把任务正文覆盖写入 docs/process/tasks/current.md（模板 assets/templates/06-task.md），不含 task_name；子 agent 一律读 current.md。
+3. 兜底查找：README 与 STATE.md 写明"当前任务 = docs/process/tasks/current.md"；子 agent 找不到时先查 STATE.md/README，仍无则上报，禁止猜测。
+4. 预审放行：总控 spawn 前预审 current.md（任务、输入、输出、完成标准、禁止项）完整可执行；子 agent 读取并引用"任务"段原文复述后直接开工，不等待总控确认（确认通道不可靠，等待会死锁）。
+5. spawn 消息只写"读 docs/process/tasks/current.md 执行任务"（双保险）。
+6. 心跳与超时：子 agent 每完成一个工具步骤或最多每 5 分钟调用 scripts/update-heartbeat.ps1 更新 docs/process/tasks/.heartbeat；总控每轮检查，超过 10 分钟无心跳且无产出变更 = 卡死，interrupt + 重试 ≤2 次 + 上报；心跳在更新 = 合法长任务，不打断。
+7. 生命周期与命名：task_name 带轮次/日期后缀（如 mod01-r1）；同名残留换新名，禁止同名重 spawn；总控用 list_agents 核对，完成/卡死 agent 一律 interrupt 回收。
+8. 禁止递归：任务书显式禁止 spawn 子 agent、禁止按总控角色行动；需要额外验证 agent 时上报总控创建。
+9. 失败上限：spawn/投递失败最多重试 2 次，仍失败暂停上报用户，禁止主会话代做。
+10. 数量 + 锁：spawn 前 list_agents 查存活数，再 acquire-launch-lock.ps1（锁内槽位校验，exit 2/3 重试 ≤2 次后上报）；投递完成后 release。
+11. 规范路径：spawn/消息目标用完整规范路径（如 /root/<task_name>），不用裸相对名。
+12. 子 agent 产出后，主会话先做形式校验，再更新 STATE/追踪矩阵，最后推进门禁。
+13. 交接物 = 文件路径 + 一页摘要，禁止传递全部历史上下文。
+14. 新会话第一件事：读 docs/process/STATE.md，再跑 check-flow.ps1。
+15. G5 独立补验：模块已实现、仅需验证的场景，QA 评审员上报总控，由总控用新 task_name 创建独立验证 agent 补跑，并纳入 QA 报告。
+16. 环境约束说明：消息正文/确认通道经代理不可靠（encrypted_content 被丢弃、无可靠 task_name），本协议不依赖它们；这是当前环境的既定约束，不是可选项。
 ## 状态持久化
 
 | 内容 | 位置 | 维护者 |
