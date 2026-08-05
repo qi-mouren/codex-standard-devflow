@@ -68,13 +68,14 @@ description: 大型项目标准开发流程：需求蒸馏、产品需求（PRD�
 3. **兜底查找**：README 与 STATE.md 写明"当前任务 = docs/process/tasks/current.md"；子 agent 找不到 current.md 时先查 STATE.md/README，仍无则上报，**禁止猜测**。
 4. **预审放行**：总控在 spawn 前**预审 current.md**（任务、输入、输出、完成标准、禁止项完整可执行）后才 spawn；子 agent 读取 current.md、引用"任务"段原文复述后**直接开工**，**不再等待总控确认**（确认通道不可靠，等待会死锁）。
 5. **spawn 消息只写路径**："读 docs/process/tasks/current.md 执行任务"（双保险；正文不可达时靠第 2/3 条兜底）。
-6. **心跳与超时**：子 agent 每完成一个工具步骤或最多每 5 分钟调用 `scripts/update-heartbeat.ps1 -ProjectPath <项目> -TaskName <task_name>` 更新 `docs/process/tasks/.heartbeat`。总控每次检查：**超过 10 分钟无心跳且无产出变更 = 判定卡死**，interrupt 并重试（≤2 次）后上报；心跳在更新 = 合法长任务，不得打断。
-7. **生命周期与命名**：task_name 带轮次/日期后缀（如 `mod01-r1`）；同名残留时换新名，**禁止同名重 spawn**（会报 agent path already exists）；总控用 list_agents 核对，已完成/卡死 agent 一律 interrupt 回收后再进下一轮。
+6. **心跳与超时**：子 agent 每完成一个工具步骤或最多每 60 秒调用 `scripts/update-heartbeat.ps1 -ProjectPath <项目> -TaskName <task_name> -Note "<正在做什么>"` 更新 `docs/process/tasks/.heartbeat`（**note 必须写当前动作**，总控据此判断是否真在干活，而不只是存活）。总控每次检查：**超过 3 分钟无心跳且无产出变更 = 判定卡死**，interrupt 并重试（≤2 次）后上报；心跳在更新 = 合法长任务，不得打断。
+7. **生命周期与命名**：task_name 只允许小写字母/数字/下划线（源码校验，如 `mod01_r1`、`mod02_20260805`；**连字符会被拒绝**）；同名残留时换新名，**禁止同名重 spawn**（会报 agent path already exists）；官方 issue #13947 确认 agent 完成/中断后**不会自动释放槽位**，因此每轮结束必须 interrupt 回收，否则槽位永久泄漏；总控用 list_agents 核对后再进下一轮。
 8. **禁止递归**：任务书显式写"禁止 spawn 子 agent、禁止按总控角色行动"；需要额外验证 agent 时上报总控，由总控创建。
 9. **失败上限**：spawn/投递失败**最多重试 2 次**；仍失败必须暂停上报用户，**禁止主会话代做**该子 agent 的工作。
 10. **数量 + 锁**：spawn 前先 list_agents 查存活 agent 数（含主控），再运行 `scripts/acquire-launch-lock.ps1 -ProjectPath <项目> -TaskName <task_name> -ActiveAgentCount <N> -MaxConcurrentThreads <M>`（默认 M=7）：exit 2=锁占用、exit 3=槽位不足，均重试 ≤2 次后上报，禁止强行 spawn；投递完成后 `scripts/release-launch-lock.ps1` 释放。
 11. **规范路径**：spawn/消息目标一律用完整规范路径（如 `/root/<task_name>`），不使用裸相对名。
 12. **并发容量**：并发槽位以环境为准（默认 4 含主控；32G 内存推荐 agents=6 共 7 线程；改后重启生效；总线程不要到 8）。
+13. **工作目录（cwd）规则**：子 agent 继承父会话的当前工作目录；spawn 前必须确认当前会话 cwd = 项目根目录（`Get-Location`），否则子 agent 找不到任务书/产物。切换项目时先开新会话，再在新会话里 spawn。
 ## 角色清单
 
 | 角色 | 职责 | 产出 |

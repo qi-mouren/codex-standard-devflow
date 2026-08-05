@@ -14,6 +14,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+if ($TaskName -notmatch '^[a-z0-9_]+$') {
+    Write-Host "invalid task_name: '$TaskName' (only lowercase letters, digits, underscores allowed)" -ForegroundColor Red
+    exit 4
+}
+
 $lockRoot = $null
 foreach ($candidate in @((Join-Path 'C:\tmp' 'standard-devflow-locks'), (Join-Path $env:TEMP 'standard-devflow-locks'))) {
     try { New-Item -ItemType Directory -Path $candidate -Force -ErrorAction Stop | Out-Null; $lockRoot = $candidate; break } catch {}

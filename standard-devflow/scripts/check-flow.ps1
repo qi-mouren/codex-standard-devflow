@@ -96,8 +96,8 @@ if (Test-Path $hbFile) {
     try {
         $hb = Get-Content $hbFile -Raw | ConvertFrom-Json
         $ageMin = ((Get-Date) - ([datetime]$hb.timestamp)).TotalMinutes
-        if ($ageMin -gt 10) { Write-Issue "心跳过期: $([math]::Round($ageMin,1)) 分钟前更新 ($($hb.task))" }
-        else { Write-Ok "心跳正常: $([math]::Round($ageMin,1)) 分钟前更新 ($($hb.task))" }
+        if ($ageMin -gt 3) { Write-Issue "心跳过期: $([math]::Round($ageMin,1)) 分钟前更新 ($($hb.task))" }
+        else { $note = if ($hb.note) { " - $($hb.note)" } else { "" }; Write-Ok "心跳正常: $([math]::Round($ageMin,1)) 分钟前更新 ($($hb.task)$note)" }
     } catch { Write-Issue "心跳文件无法解析: $hbFile" }
 } else {
     Write-Host "[..] 无心跳文件（尚未启动子 agent 或已清理）" -ForegroundColor DarkGray

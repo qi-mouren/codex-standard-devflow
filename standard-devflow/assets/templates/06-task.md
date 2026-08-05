@@ -30,7 +30,7 @@
 ## 开工方式
 
 - 读取本文件 → 引用「任务」段原文复述 → 直接开工（不等待总控确认）
-- 每完成一个工具步骤或最多每 5 分钟运行 scripts/update-heartbeat.ps1 -ProjectPath <项目路径> -TaskName <你的 task_name>
+- 每完成一个工具步骤或最多每 60 秒运行 scripts/update-heartbeat.ps1 -ProjectPath <项目路径> -TaskName <你的 task_name> -Note "<正在做什么>"
 
 ## 上下文摘要（一页）
 

@@ -43,8 +43,8 @@
 3. 兜底查找：README 与 STATE.md 写明"当前任务 = docs/process/tasks/current.md"；子 agent 找不到时先查 STATE.md/README，仍无则上报，禁止猜测。
 4. 预审放行：总控 spawn 前预审 current.md（任务、输入、输出、完成标准、禁止项）完整可执行；子 agent 读取并引用"任务"段原文复述后直接开工，不等待总控确认（确认通道不可靠，等待会死锁）。
 5. spawn 消息只写"读 docs/process/tasks/current.md 执行任务"（双保险）。
-6. 心跳与超时：子 agent 每完成一个工具步骤或最多每 5 分钟调用 scripts/update-heartbeat.ps1 更新 docs/process/tasks/.heartbeat；总控每轮检查，超过 10 分钟无心跳且无产出变更 = 卡死，interrupt + 重试 ≤2 次 + 上报；心跳在更新 = 合法长任务，不打断。
-7. 生命周期与命名：task_name 带轮次/日期后缀（如 mod01-r1）；同名残留换新名，禁止同名重 spawn；总控用 list_agents 核对，完成/卡死 agent 一律 interrupt 回收。
+6. 心跳与超时：子 agent 每完成一个工具步骤或最多每 60 秒调用 scripts/update-heartbeat.ps1 -ProjectPath <项目> -TaskName <task_name> -Note "<正在做什么>" 更新 docs/process/tasks/.heartbeat（note 必须写当前动作，总控据此区分长任务与卡死）；总控每轮检查，超过 3 分钟无心跳且无产出变更 = 卡死，interrupt + 重试 ≤2 次 + 上报；心跳在更新 = 合法长任务，不打断。
+7. 生命周期与命名：task_name 只允许小写字母/数字/下划线（如 mod01_r1、mod02_20260805，连字符被校验拒绝）；同名残留换新名，禁止同名重 spawn；总控用 list_agents 核对，完成/卡死 agent 一律 interrupt 回收（官方 issue #13947：agent 完成/中断后不会自动释放槽位，不回收会泄漏）。
 8. 禁止递归：任务书显式禁止 spawn 子 agent、禁止按总控角色行动；需要额外验证 agent 时上报总控创建。
 9. 失败上限：spawn/投递失败最多重试 2 次，仍失败暂停上报用户，禁止主会话代做。
 10. 数量 + 锁：spawn 前 list_agents 查存活数，再 acquire-launch-lock.ps1（锁内槽位校验，exit 2/3 重试 ≤2 次后上报）；投递完成后 release。
@@ -54,6 +54,7 @@
 14. 新会话第一件事：读 docs/process/STATE.md，再跑 check-flow.ps1。
 15. G5 独立补验：模块已实现、仅需验证的场景，QA 评审员上报总控，由总控用新 task_name 创建独立验证 agent 补跑，并纳入 QA 报告。
 16. 环境约束说明：消息正文/确认通道经代理不可靠（encrypted_content 被丢弃、无可靠 task_name），本协议不依赖它们；这是当前环境的既定约束，不是可选项。
+17. 工作目录（cwd）规则：子 agent 继承父会话 cwd；spawn 前确认当前会话 cwd = 项目根目录（Get-Location），否则子 agent 找不到任务书/产物；切换项目先开新会话再 spawn。
 ## 状态持久化
 
 | 内容 | 位置 | 维护者 |
