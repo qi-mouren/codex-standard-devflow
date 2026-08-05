@@ -31,14 +31,14 @@
 
 - 读取本文件 → 引用「任务」段原文复述 → 直接开工（不等待总控确认）
 - 每完成一个工具步骤或最多每 60 秒运行 scripts/update-heartbeat.ps1 -ProjectPath <项目路径> -LogFile <下方"运行日志"指定的路径> -Note "<正在做什么>"
-- 预计超过 60 秒的长命令开始前，先发一条 note 以 LONG: 开头的心跳（如 -Note "LONG: 运行全量测试"），命令结束后立即补发正常心跳
+- 预计超过 60 秒的命令必须用 scripts/long-cmd.ps1 包装（自动 LONG 心跳 + 可选超时）；如无法包装，则手动按 LONG 约定：开始前发 LONG: 心跳、每 ≤60 秒续发、结束后补发
 
 ## 运行日志（本轮）
 
 - 本轮日志文件：docs/process/logs/runs/run-<N>.jsonl
 - 心跳命令：scripts/update-heartbeat.ps1 -ProjectPath <项目路径> -LogFile docs/process/logs/runs/run-<N>.jsonl -Note "<正在做什么>"
 - 每完成一个工具步骤或最多每 60 秒运行一次；总控据此判断你是否在干活。
-- 长命令（预计超过 60 秒）开始前先发 LONG: 心跳，结束后补发；总控对 LONG 心跳宽限 15 分钟。
+- 长命令（预计超过 60 秒）：scripts/long-cmd.ps1 -ProjectPath <项目路径> -LogFile docs/process/logs/runs/run-<N>.jsonl -Command "<命令>" [-TimeoutSec <秒>]；总控对 LONG 心跳宽限 15 分钟。
 
 ## 预算（本轮，总控填写）
 
