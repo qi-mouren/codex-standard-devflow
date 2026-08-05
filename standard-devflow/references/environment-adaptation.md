@@ -29,11 +29,15 @@
 12. **并发容量**：并发槽位以环境为准（默认 4 含主控；32G 内存推荐 agents=6 共 7 线程；改后重启生效；总线程不要到 8）。
 13. **工作目录（cwd）规则**：子 agent 继承父会话的当前工作目录；spawn 前必须确认当前会话 cwd = 项目根目录（`Get-Location`），否则子 agent 找不到任务书/产物。切换项目时先开新会话，再在新会话里 spawn。
 14. **运行监控（两本账）**：总控每个调度动作必须用 `scripts/record-event.ps1 -ProjectPath <项目> -Event <事件> -Run <run-N> [-TaskName <task_name>] [-Detail "..."]` 追加 `docs/process/logs/orchestration.jsonl`；子 agent 心跳同时追加 `docs/process/logs/runs/run-<N>.jsonl`。
+15. **事实账（适配层 v2）**：watchdog 每个 tick 追加一行事实到 `docs/process/logs/runs/run-<N>.facts.jsonl`（心跳年龄/LONG/仓库最近变更/临时目录活动/进程），账本从此有"事实层"；判卡死与复盘以事实账为准，不再只靠协议事件。
+16. **watchdog 与预算**：spawn 成功后总控立即后台启动 `scripts/watchdog.ps1 -ProjectPath <项目> -Run run-<N> -BudgetMin <M> [-TempPrefix <模块前缀>] [-ProcessMatch <串>]`（隐藏窗口，Start-Process -WindowStyle Hidden）；watchdog 自动写事实账、按 3/8/15 阈值写 `agent_stale_warning / agent_stale_critical` 事件、超预算写 `agent_budget_exceeded` 事件；**interrupt 前必须先跑 `watchdog.ps1 ... -Once` 取证**（.heartbeat + 全仓 + %TEMP% 前缀 + 进程快照落 evidence 文件）。任务书模板含预算节（N×M）：M 由 watchdog 机械校验，N 由总控按重试上限校验。
+17. **外部变更登记**：任何会话（含其它线程/流程库会话）写本项目文件后，必须用 `record-event.ps1 -Event external_change -Detail "<路径清单或摘要>"` 登记；总控每轮开始/恢复时以事实账核对 STATE 与磁盘是否一致，发现差异先更正 STATE 再继续。
 
 ## 3. 运行监控（两本账）
 
-- 调度账 `docs/process/logs/orchestration.jsonl`：事件 = taskbook_write / lock_acquire / lock_release / spawn_start / spawn_success / spawn_fail / interrupt / gate / state_update / user_decision；用 `scripts/record-event.ps1` 追加。
+- 调度账 `docs/process/logs/orchestration.jsonl`：事件 = taskbook_write / lock_acquire / lock_release / spawn_start / spawn_success / spawn_fail / interrupt / gate / state_update / user_decision / agent_stale_warning / agent_stale_critical / agent_budget_exceeded / external_change；用 `scripts/record-event.ps1` 追加。
 - 执行账 `docs/process/logs/runs/run-<N>.jsonl`：由子 agent 心跳追加（`update-heartbeat.ps1 -LogFile ...`）；`.heartbeat` 快照仅用于 check-flow 实时判定。
+- 事实账 `docs/process/logs/runs/run-<N>.facts.jsonl`：由 watchdog 自动追加（每 tick 一行）；证据快照 `run-<N>.evidence-<HHmmss>.json` 在 stale_critical / budget_exceeded 时落盘。
 - 复盘：`scripts/analyze-flow.ps1 -ProjectPath <项目> [-OutFile <报告.md>]` 输出概览、时间线、每轮明细与异常（spawn 后无首心跳、心跳间隔过大、spawn 后无 interrupt）。
 - 日志策略：调度账随项目提交；执行账 runs/ 量大建议按 `assets/templates/gitignore-logs.example` 忽略。
 
@@ -54,7 +58,8 @@
 - [ ] 确认 cwd = 项目根目录
 - [ ] current.md 写入并预审 → record-event taskbook_write
 - [ ] list_agents 查存活数 → acquire-launch-lock 抢锁
-- [ ] spawn（fork_turns=none，消息只写路径）→ record-event spawn_start/spawn_success
-- [ ] 3 分钟无首条心跳 → 预警；8 分钟无心跳且无产出 → 才判卡死（interrupt 前重读 .heartbeat + 全仓最近 2 分钟变更扫描）
+- [ ] spawn（fork_turns=none，消息只写路径）→ record-event spawn_start/spawn_success → 后台启动 watchdog（-BudgetMin/-TempPrefix）
+- [ ] 只响应 watchdog 事件：3 分钟无首条心跳/心跳偏旧 → agent_stale_warning；8 分钟无心跳且无产出 → agent_stale_critical；超预算 → agent_budget_exceeded
+- [ ] interrupt 前先 watchdog -Once 取证（.heartbeat + 全仓 + %TEMP% 前缀 + 进程快照），任一新鲜即不得打断
 - [ ] 完成/卡死 → interrupt → record-event interrupt → release-launch-lock
 - [ ] 每轮结束更新 STATE/追踪矩阵 → record-event state_update

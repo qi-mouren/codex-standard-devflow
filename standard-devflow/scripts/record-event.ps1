@@ -13,7 +13,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$validEvents = @("taskbook_write", "lock_acquire", "lock_release", "spawn_start", "spawn_success", "spawn_fail", "interrupt", "gate", "state_update", "user_decision")
+$validEvents = @("taskbook_write", "lock_acquire", "lock_release", "spawn_start", "spawn_success", "spawn_fail", "interrupt", "gate", "state_update", "user_decision", "agent_stale_warning", "agent_stale_critical", "agent_budget_exceeded", "external_change")
 if ($validEvents -notcontains $Event) {
     Write-Host "invalid event: '$Event' (allowed: $($validEvents -join ', '))" -ForegroundColor Red
     exit 5
