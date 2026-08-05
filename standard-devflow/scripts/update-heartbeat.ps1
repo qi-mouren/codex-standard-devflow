@@ -34,7 +34,11 @@ $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 Write-Host "heartbeat updated: $hbFile"
 
 if ($LogFile -ne "") {
-    $runPath = Join-Path $ProjectPath $LogFile
+    if ([System.IO.Path]::IsPathRooted($LogFile)) {
+        $runPath = $LogFile
+    } else {
+        $runPath = Join-Path $ProjectPath $LogFile
+    }
     $runDir = Split-Path -Parent $runPath
     New-Item -ItemType Directory -Path $runDir -Force | Out-Null
     $runPayload = @{

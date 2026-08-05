@@ -9,6 +9,7 @@
 - 消息通道不可靠：spawn/followup 消息正文经 encrypted_content 被代理丢弃（正文与确认均送不到）；子 agent 上下文中无可靠 task_name。
 - 生命周期缺陷：已完成/中断 agent 不自动释放槽位（openai/codex issue #13947）；同名重 spawn 报 agent path already exists；无删除工具。
 - cwd 继承：子 agent 继承父会话 cwd；父会话切目录后 spawn 的 agent 找不到任务书/产物。
+- 上下文继承反噬：fork_turns=all 时子 agent 继承总控全量对话上下文，消息丢失后会把"总控的延续"当角色（自行建任务书、做探针、递归 spawn）。
 - 并发上限：同时活跃 agent 数受限（默认 4 含主控；32G 内存推荐 agents=6 共 7 线程，改后重启生效；总线程不要到 8）。
 - 结论：协议一律**不依赖消息正文、不依赖 task_name、不依赖确认回执**。
 
@@ -18,8 +19,8 @@
 2. **任务书唯一化**：任务书固定写入 `docs/process/tasks/current.md`（模板 `assets/templates/06-task.md`，每轮覆盖，不含 task_name）。子 agent **无需知道自己的名字**，一律读 current.md。
 3. **兜底查找**：README 与 STATE.md 写明"当前任务 = docs/process/tasks/current.md"；子 agent 找不到 current.md 时先查 STATE.md/README，仍无则上报，**禁止猜测**。
 4. **预审放行**：总控在 spawn 前**预审 current.md**（任务、输入、输出、完成标准、禁止项完整可执行）后才 spawn；子 agent 读取 current.md、引用"任务"段原文复述后**直接开工**，**不再等待总控确认**（确认通道不可靠，等待会死锁）。
-5. **spawn 消息只写路径**："读 docs/process/tasks/current.md 执行任务"（双保险；正文不可达时靠第 2/3 条兜底）。
-6. **心跳与超时**：子 agent 每完成一个工具步骤或最多每 60 秒调用 `scripts/update-heartbeat.ps1 -ProjectPath <项目> -LogFile docs/process/logs/runs/run-<N>.jsonl -Note "<正在做什么>"`，同时更新心跳快照 `.heartbeat` 并追加执行账（**note 必须写当前动作**，总控据此判断是否真在干活，而不只是存活）。总控每次检查：**spawn 后 90 秒内应出现首条心跳**，未见即提前预警/准备重试（不必死等超时）；**超过 3 分钟无心跳且无产出变更 = 判定卡死**，interrupt 并重试（≤2 次）后上报；心跳在更新 = 合法长任务，不得打断。
+5. **spawn 消息只写路径 + 零上下文继承**："读 docs/process/tasks/current.md 执行任务"（双保险；正文不可达时靠第 2/3 条兜底）；spawn 一律用 **fork_turns=none**，子 agent 不继承总控对话上下文，只依赖自包含的 current.md——消息丢失时干净空转（可被无心跳检测），不会模仿总控递归 spawn。任务书必须自包含（角色、任务、输入、输出、完成标准、禁止项、心跳命令、运行日志路径）。策略待实测验证；若连续 spawn 因零上下文无法执行，回退 fork_turns=all + 任务书显式禁止递归并记录。
+6. **心跳与超时**：子 agent 每完成一个工具步骤或最多每 60 秒调用 `scripts/update-heartbeat.ps1 -ProjectPath <项目> -LogFile docs/process/logs/runs/run-<N>.jsonl -Note "<正在做什么>"`，同时更新心跳快照 `.heartbeat` 并追加执行账（**note 必须写当前动作**，总控据此判断是否真在干活，而不只是存活）。总控每次检查：**spawn 后 90 秒内应出现首条心跳**，未见即提前预警/准备重试（不必死等超时）；**超过 3 分钟无心跳且无产出变更 = 判定卡死**，interrupt 并重试（≤2 次）后上报；**"无产出"必须做全仓库最近变更扫描（按 LastWriteTime 递归全仓），不只查 src/tests/tasks 等固定目录**（实测 dev05_r7 的产出在 tools/ 被漏判）；心跳在更新 = 合法长任务，不得打断。
 7. **生命周期与命名**：task_name 只允许小写字母/数字/下划线（源码校验，如 `mod01_r1`、`mod02_20260805`；**连字符会被拒绝**）；同名残留时换新名，**禁止同名重 spawn**；每轮结束必须 interrupt 回收，否则槽位永久泄漏；总控用 list_agents 核对后再进下一轮。
 8. **禁止递归**：任务书显式写"禁止 spawn 子 agent、禁止按总控角色行动"；需要额外验证 agent 时上报总控，由总控创建。
 9. **失败上限**：spawn/投递失败**最多重试 2 次**；仍失败必须暂停上报用户，**禁止主会话代做**该子 agent 的工作。
@@ -53,7 +54,7 @@
 - [ ] 确认 cwd = 项目根目录
 - [ ] current.md 写入并预审 → record-event taskbook_write
 - [ ] list_agents 查存活数 → acquire-launch-lock 抢锁
-- [ ] spawn（消息只写路径）→ record-event spawn_start/spawn_success
+- [ ] spawn（fork_turns=none，消息只写路径）→ record-event spawn_start/spawn_success
 - [ ] 90 秒内未见首条心跳 → 预警/准备重试
 - [ ] 完成/卡死 → interrupt → record-event interrupt → release-launch-lock
 - [ ] 每轮结束更新 STATE/追踪矩阵 → record-event state_update
