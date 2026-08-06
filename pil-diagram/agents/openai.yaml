@@ -1,0 +1,4 @@
+interface:
+  display_name: "PIL 手绘图表"
+  short_description: "用 Python PIL 手工绘制清晰美观的架构图/流程图（雅黑、圆角卡片、语义色板、像素级文字校验）"
+  default_prompt: "Use $pil-diagram 按 PIL 手绘风格画一张清晰的架构图/流程图。"
