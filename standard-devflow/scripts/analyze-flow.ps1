@@ -38,7 +38,7 @@ if (Test-Path $orchFile) {
 # 2. 读执行账
 $runs = @{}
 if (Test-Path $runsDir) {
-    Get-ChildItem $runsDir -Filter *.jsonl | Sort-Object Name | ForEach-Object {
+    Get-ChildItem $runsDir -Filter *.jsonl | Where-Object { $_.Name -notlike '*.facts.jsonl' } | Sort-Object Name | ForEach-Object {
         $hbs = @()
         foreach ($line in (Get-Content $_.FullName -Encoding UTF8)) {
             if ([string]::IsNullOrWhiteSpace($line)) { continue }
