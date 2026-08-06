@@ -32,6 +32,7 @@
 - 读取本文件 → 引用「任务」段原文复述 → 直接开工（不等待总控确认）
 - 每完成一个工具步骤或最多每 60 秒运行 scripts/update-heartbeat.ps1 -ProjectPath <项目路径> -LogFile <下方"运行日志"指定的路径> -Note "<正在做什么>"
 - 预计超过 60 秒的命令必须用 scripts/long-cmd.ps1 包装（自动 LONG 心跳 + 可选超时）；如无法包装，则手动按 LONG 约定：开始前发 LONG: 心跳、每 ≤60 秒续发、结束后补发
+- 使用约束：long-cmd 只包装**原生命令**（python / unittest / powershell -File 等）；禁止包装以纯 PS `exit N` 结尾的命令串（exit 会先于哨兵结束 Job，导致退出码丢失、输出截断）
 
 ## 运行日志（本轮）
 
@@ -39,6 +40,7 @@
 - 心跳命令：scripts/update-heartbeat.ps1 -ProjectPath <项目路径> -LogFile docs/process/logs/runs/run-<N>.jsonl -Note "<正在做什么>"
 - 每完成一个工具步骤或最多每 60 秒运行一次；总控据此判断你是否在干活。
 - 长命令（预计超过 60 秒）：scripts/long-cmd.ps1 -ProjectPath <项目路径> -LogFile docs/process/logs/runs/run-<N>.jsonl -Command "<命令>" [-TimeoutSec <秒>]；总控对 LONG 心跳宽限 15 分钟。
+- 同上使用约束：只包装原生命令；纯 PS `exit N` 结尾的命令串退出码不可靠，应去掉 exit 或改为调用原生命令。
 
 ## 预算（本轮，总控填写）
 
