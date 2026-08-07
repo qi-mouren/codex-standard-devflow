@@ -7,6 +7,7 @@ param(
     [Parameter(Mandatory = $true)][string]$ProjectPath,
     [string]$TaskName = "child",
     [string]$LogFile = "",
+    [string]$HeartbeatFile = "",
     [string]$Note = ""
 )
 
@@ -19,7 +20,11 @@ if ($TaskName -and $TaskName -notmatch '^[a-z0-9_]+$') {
 
 $tasksDir = Join-Path $ProjectPath 'docs\process\tasks'
 New-Item -ItemType Directory -Path $tasksDir -Force | Out-Null
-$hbFile = Join-Path $tasksDir '.heartbeat'
+if ($HeartbeatFile -ne "") {
+    $hbFile = if ([System.IO.Path]::IsPathRooted($HeartbeatFile)) { $HeartbeatFile } else { Join-Path $ProjectPath $HeartbeatFile }
+} else {
+    $hbFile = Join-Path $tasksDir '.heartbeat'
+}
 
 $payload = @{
     project   = $ProjectPath

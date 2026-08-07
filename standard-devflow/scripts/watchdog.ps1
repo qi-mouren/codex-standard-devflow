@@ -15,6 +15,7 @@ param(
     [int]$IntervalSec = 60,
     [string]$TempPrefix = "",
     [string]$ProcessMatch = "",
+    [string]$HeartbeatFile = "",
     [int]$MaxMinutes = 0,
     [switch]$Once
 )
@@ -27,7 +28,11 @@ $LongMin = 15
 $script:Started = Get-Date
 if ($MaxMinutes -le 0) { $MaxMinutes = $BudgetMin + 20 }
 $RunsDir = Join-Path $ProjectPath 'docs\process\logs\runs'
-$HbFile = Join-Path $ProjectPath 'docs\process\tasks\.heartbeat'
+if ($HeartbeatFile -ne "") {
+    $HbFile = if ([System.IO.Path]::IsPathRooted($HeartbeatFile)) { $HeartbeatFile } else { Join-Path $ProjectPath $HeartbeatFile }
+} else {
+    $HbFile = Join-Path $ProjectPath 'docs\process\tasks\.heartbeat'
+}
 $FactsFile = Join-Path $RunsDir ($Run + '.facts.jsonl')
 New-Item -ItemType Directory -Path $RunsDir -Force | Out-Null
 $Utf8 = New-Object System.Text.UTF8Encoding($false)

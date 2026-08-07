@@ -65,10 +65,10 @@ description: 大型项目标准开发流程：需求蒸馏、产品需求（PRD�
 
 核心要点（不可违反）：
 
-- 默认每轮只 spawn 1 个子 agent，完成后 interrupt 回收再开下一个；确需并行每批 ≤2~3 个且按剩余槽位。
-- 任务书固定写入 `docs/process/tasks/current.md`，spawn 消息只写"读 current.md 执行任务"。
-- 子 agent 心跳：每完成一个工具步骤或最多每 60 秒一次（带 `-Note`）；预计超过 60 秒的长命令必须用 `scripts/long-cmd.ps1` 包装（自动 LONG 心跳 + 可选超时）；spawn 后 3 分钟无首心跳预警、8 分钟无心跳且无产出才判卡死；interrupt 前必须重读 `.heartbeat` 并做全仓最近 2 分钟变更扫描，任一新鲜即不得打断。
-- 运行监控：spawn 成功后由总控启动后台 watchdog（事实账 `run-N.facts.jsonl` + 3/8/15 判卡死 + 预算校验，自动写账与事件）；interrupt 前先 `watchdog.ps1 -Once` 取证；任务书必须含预算节（N×M）；外部会话写项目文件需登记 `external_change`。
+- 契约冻结后按依赖图分批并行（每批 ≤2~3 个且按剩余槽位），每批全部 interrupt 回收后再开下一批；单 agent 串行仍是兜底。
+- 任务书写入 `docs/process/tasks/<task_name>.md` 并镜像 current.md 兜底；spawn 消息写任务书路径。
+- 子 agent 心跳：每完成一个工具步骤或最多每 60 秒一次（带 `-Note`）；并行轮各用独立心跳文件（`-HeartbeatFile`）；预计超过 60 秒的长命令必须用 `scripts/long-cmd.ps1` 包装（自动 LONG 心跳 + 可选超时）；spawn 后 3 分钟无首心跳预警、8 分钟无心跳且无产出才判卡死；interrupt 前必须重读心跳文件并做全仓最近 2 分钟变更扫描，任一新鲜即不得打断。
+- 运行监控：spawn 成功后由总控启动后台 watchdog（事实账 `run-N.facts.jsonl` + 3/8/15 判卡死 + 预算校验，自动写账与事件；并行轮传 `-HeartbeatFile`）；interrupt 前先 `watchdog.ps1 -Once` 取证；任务书必须含预算节（N×M）与关键接口速查；全量回归用 `scripts/run-tests-parallel.ps1` 分片并行（dev 轮只跑本模块单测 + 契约测试）；外部会话写项目文件需登记 `external_change`。
 - task_name 只允许小写字母/数字/下划线；每轮结束必须 interrupt 回收（槽位不自动释放）。
 - 子 agent 禁止再 spawn；总控每个调度动作必须 record-event 落调度账，复盘跑 analyze-flow.ps1。
 ## 角色清单
