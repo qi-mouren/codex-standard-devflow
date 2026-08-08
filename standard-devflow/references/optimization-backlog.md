@@ -57,3 +57,35 @@
 - 消息通道（encrypted_content）：已由 REQ-019 4447 解包代理修复；C5（并入正式网关 MOD-03）属 v2 变更。
 - agent 进程内部状态/生命周期：平台层能力，流程无法完全替代。
 - 长命令包装器（long-cmd.ps1）：只包装原生命令；纯 PS `exit N` 结尾的命令串退出码不可靠（约束已写入模板与协议）。
+
+## V2（下一版本）候选
+
+> 状态：待 A/B/C/E 经真实批次验证通过后启动（2026-08-08 记录，来源=外部 review + 文档治理讨论）。
+
+### P0 采纳项
+
+1. **Workflow quick mode（轻量入口）**：新增快速模式（需求 → Task → Coding → Review），小改动/修 bug/小接口不跑完整 G0-G5；standard/enterprise 保持现有流程。改动：STATE 加 mode 字段、任务书模板加快速模式变体、SKILL.md 触发说明。
+2. **Agent Registry（STATE 增强）**：STATE 增加活跃 agent 表（id / role / task 文件 / status / 心跳文件），与调度账互补（快照 vs 事件流）；配合模块并行，总控与用户一眼可见"谁活着、谁负责什么"。
+3. **Scope Lock（任务书硬隔离）**：任务书模板增加"允许修改 / 禁止修改"文件范围节（默认：只写本模块 src/modXX + tests/test_modXX；禁止 contracts/、其它模块代码），把并行冲突从约定升级为显式约束。
+4. **Artifact 元数据**：各阶段产物模板头部增加 version / hash / generated_by / reviewed_by / status 元数据块，与现有版本行、门禁记录打通。
+
+### 缓做项（有基础或依赖外部）
+
+- 抽象角色层（Controller/Planner/Executor/Reviewer/Validator/Integrator）：等出现多领域需求（数据/文档/运维工程）时做映射表。
+- Git solo 说明：git-flow 已是阶段分支+tag，补一句"solo 模式=阶段分支+checkpoint 提交"即可。
+- 自动恢复文档：文件式协议+STATE+心跳已支持恢复，补一节"恢复流程"清单。
+- Cost Budget（per-role token 上限）：时间预算（watchdog N×M）已覆盖；token 预算需代理侧支持，另行评估。
+
+### 明确不做
+
+- max_depth=3 层级树：保持"子 agent 禁止再 spawn"（深度封顶 2）。理由：本环境递归曾导致线程耗尽与角色误读，是刻意设计，非疏漏。
+
+### 文档治理包（解决"项目文档越积越多，单会话上下文撑爆"）
+
+目标：每个会话只吃自己需要的一小片，共享靠文件系统，不靠"一个会话读完全部文档"。
+
+1. **全局文档地图 INDEX.md**：`docs/process/INDEX.md` 一页地图（每个史诗：产物清单 + 版本 + 状态 + 指针 + 摘要链接）；新会话/总控先读 INDEX + STATE，不读全文。
+2. **门禁摘要收敛**：每个门禁通过时把产物蒸馏成一页摘要（PRD→一页供 HLD；HLD→一页供拆解/LLD；史诗完成→EPIC 一页总结）；下游只读摘要 + 链接，细节按需查原文。契约注册表与任务书接口速查已是此模式，推广到全阶段。
+3. **历史史诗归档**：已交付史诗产物移入 `docs/archive/epic-XX/`，STATE/INDEX 只留指针 + 摘要；活跃史诗保持原位。
+4. **检索优先**：会话需要细节时用检索（rg / Select-String）定位，不整篇读；INDEX 提供检索入口与关键词建议。
+5. **主控必读清单（上下文预算）**：主控会话只必读 STATE + INDEX + 当前阶段摘要 + 契约注册表接口行；PRD/HLD/LLD 全文由对应子 agent 按任务书读取。
