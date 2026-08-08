@@ -90,6 +90,7 @@
 4. **检索优先**：会话需要细节时用检索（rg / Select-String）定位，不整篇读；INDEX 提供检索入口与关键词建议。
 5. **主控必读清单（上下文预算）**：主控会话只必读 STATE + INDEX + 当前阶段摘要 + 契约注册表接口行；PRD/HLD/LLD 全文由对应子 agent 按任务书读取。
 6. **产品级汇总层（用户视角，跨史诗）**：`docs/product/PRODUCT-PRD.md`（产品需求总览：跨史诗功能清单 + REQ 全局表 + 验收口径）、`docs/product/PRODUCT-HLD.md`（全局架构图/模块全景/接口全景 → 指向契约注册表）、`docs/product/ROADMAP.md`（里程碑与发布计划）。维护方式=门禁增量合并：G1 通过时 PRD 负责人把本史诗增量并入 PRODUCT-PRD，G2 通过时架构负责人并入 PRODUCT-HLD。**汇总只做集成视图、用链接引用细节、不复制全文**（避免双处维护）；用户读 PRODUCT-PRD 即得"PRD-01 + PRD-02"全局视角，想看单史诗细节再点链接。汇总文档带 version/hash 元数据（同 Artifact 元数据项）。
+7. **首次触发整合（存量历史项目）**：新项目从 G0 起增量维护；**若项目历史已用标准流程产出过文档**（有 STATE/PRD/HLD/LLD/契约但无 INDEX/归档/产品级汇总），**首次接入 V2 时触发一次性文件整合**：运行 `scripts/consolidate-docs.ps1` 生成 INDEX.md + 摘要骨架 + 归档计划，总控/用户审核后执行归档与摘要填写，产出 PRODUCT-PRD/HLD 初稿。触发时机=新会话发现"有历史产物但无 INDEX.md"即执行。
 
 ## 验证记录（2026-08-08，Neo EPIC-07 B-4）
 
