@@ -69,6 +69,8 @@ description: 大型项目标准开发流程：需求蒸馏、产品需求（PRD�
 - 任务书写入 `docs/process/tasks/<task_name>.md` 并镜像 current.md 兜底；spawn 消息写任务书路径。
 - 子 agent 心跳：每完成一个工具步骤或最多每 60 秒一次（带 `-Note`）；并行轮各用独立心跳文件（`-HeartbeatFile`）；预计超过 60 秒的长命令必须用 `scripts/long-cmd.ps1` 包装（自动 LONG 心跳 + 可选超时）；spawn 后 3 分钟无首心跳预警、8 分钟无心跳且无产出才判卡死；interrupt 前必须重读心跳文件并做全仓最近 2 分钟变更扫描，任一新鲜即不得打断。
 - 运行监控：spawn 成功后由总控启动后台 watchdog（事实账 `run-N.facts.jsonl` + 3/8/15 判卡死 + 预算校验，自动写账与事件；并行轮传 `-HeartbeatFile`）；interrupt 前先 `watchdog.ps1 -Once` 取证；任务书必须含预算节（N×M）与关键接口速查；全量回归用 `scripts/run-tests-parallel.ps1` 分片并行（dev 轮只跑本模块单测 + 契约测试）；外部会话写项目文件需登记 `external_change`。
+- 快速模式：小改动（修 bug / 小接口 / 小重构，不跨模块、不碰契约）走 `references/quick-mode.md`：需求→任务→实现→评审→提交，不跑完整 G0-G5；评审不可免。
+- 文档治理：`references/document-governance.md`（INDEX/摘要/归档/产品级汇总/首次触发整合）；存量历史项目首次接入跑 `scripts/consolidate-docs.ps1`。
 - task_name 只允许小写字母/数字/下划线；每轮结束必须 interrupt 回收（槽位不自动释放）。
 - 子 agent 禁止再 spawn；总控每个调度动作必须 record-event 落调度账，复盘跑 analyze-flow.ps1。
 ## 角色清单

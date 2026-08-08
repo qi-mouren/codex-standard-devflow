@@ -16,9 +16,9 @@
 ## 2. 文件式执行协议（最终方案）
 
 1. **批次调度（默认串行，并行可选）**：契约冻结后按模块依赖图分批，无依赖模块每批 **2~3 个并行** spawn（受剩余槽位约束）；每批全部完成后 interrupt 回收，再开下一批。单 agent 串行仍是兜底（消息通道不可靠或槽位不足时回退）。
-2. **命名任务书 + current.md 镜像兜底**：任务书写入 `docs/process/tasks/<task_name>.md`（模板 `assets/templates/06-task.md`，含预算节与关键接口速查）；总控同时镜像到 current.md（消息通道不可用时兜底）。子 agent 优先读自己的命名任务书，找不到再读 current.md。
+2. **命名任务书 + current.md 镜像兜底**：任务书写入 `docs/process/tasks/<task_name>.md`（模板 `assets/templates/06-task.md`，含预算节与关键接口速查）；总控同时镜像到 current.md（消息通道不可用时兜底）。子 agent 优先读自己的命名任务书，找不到再读 current.md。任务书必须预填 Scope Lock 与关键接口速查。
 3. **兜底查找**：README 与 STATE.md 写明"当前任务 = docs/process/tasks/<task_name>.md（镜像 current.md）"；子 agent 找不到自己的任务书时先查 current.md，再查 STATE.md/README，仍无则上报，**禁止猜测**。
-4. **预审放行**：总控在 spawn 前**预审 current.md**（任务、输入、输出、完成标准、禁止项完整可执行）后才 spawn；子 agent 读取 current.md、引用"任务"段原文复述后**直接开工**，**不再等待总控确认**（确认通道不可靠，等待会死锁）。
+4. **预审放行**：总控在 spawn 前**预审 current.md**（任务、输入、输出、完成标准、禁止项/预算节/Scope Lock/关键接口速查完整可执行）后才 spawn；子 agent 读取 current.md、引用"任务"段原文复述后**直接开工**，**不再等待总控确认**（确认通道不可靠，等待会死锁）。
 5. **spawn 消息只写路径 + 零上下文继承**："读 docs/process/tasks/<task_name>.md 执行任务"（双保险；正文不可达时靠第 2/3 条兜底）；spawn 一律用 **fork_turns=none**，子 agent 不继承总控对话上下文，只依赖自包含的任务书——消息丢失时干净空转（可被无心跳检测），不会模仿总控递归 spawn。任务书必须自包含（角色、任务、输入、输出、完成标准、禁止项、心跳命令、运行日志路径）。策略待实测验证；若连续 spawn 因零上下文无法执行，回退 fork_turns=all + 任务书显式禁止递归并记录。
 6. **心跳与超时（阈值参数化，默认值见下）**：子 agent 每完成一个工具步骤或最多每 60 秒调用 `scripts/update-heartbeat.ps1 -ProjectPath <项目> -LogFile docs/process/logs/runs/run-<N>.jsonl -Note "<正在做什么>"`，同时更新心跳快照 `.heartbeat` 并追加执行账（**note 必须写当前动作**，总控据此判断是否真在干活，而不只是存活）。**并行轮次心跳文件独立**：每个并行 agent 用 `docs/process/tasks/.heartbeat-<task_name>`（update-heartbeat.ps1 与 watchdog.ps1 均传 `-HeartbeatFile`），避免互相覆盖；串行轮次默认 `.heartbeat`。**长命令规则**：任何预计超过 60 秒的工具调用**必须用 `scripts/long-cmd.ps1` 包装**（自动 LONG 心跳 + 可选 `-TimeoutSec`）；如无法包装，则手动按 LONG 约定：开始前发 `LONG:` 心跳、每 ≤60 秒续发、结束后补发。**使用约束**：long-cmd 只包装**原生命令**（python / unittest / powershell -File 等）；禁止包装以纯 PS `exit N` 结尾的命令串（exit 会先于哨兵结束 Job，导致退出码丢失、输出截断），应去掉 `exit` 或改为调用原生命令。总控见 `LONG:` 心跳后按长任务宽限（默认 **15 分钟**，从该心跳时间起算），不得按常规阈值打断。**判卡死阈值（默认）**：spawn 后 **3 分钟无首条心跳 = 预警**（提前准备重试）；**8 分钟无心跳且无产出变更 = 判定卡死**（冷启动含读任务书/LLD/契约等文档，超过 3 分钟属正常）。**打断前必须复查**：interrupt 前必须（1）重新读取心跳文件的 LastWriteTime 与 age，禁止沿用旧快照；（2）全仓库按 LastWriteTime 递归扫描**最近 2 分钟**变更（含 logs/，不只查 src/tests/tasks 等固定目录——实测 dev05_r7 的产出在 tools/ 被漏判）；二者任一新鲜即视为工作中，不得打断；`LONG:` 心跳按宽限期处理。interrupt + 重试（≤2 次）后上报。
 7. **生命周期与命名**：task_name 只允许小写字母/数字/下划线（源码校验，如 `mod01_r1`、`mod02_20260805`；**连字符会被拒绝**）；同名残留时换新名，**禁止同名重 spawn**；每轮结束必须 interrupt 回收，否则槽位永久泄漏；总控用 list_agents 核对后再进下一轮。
@@ -34,6 +34,10 @@
 17. **外部变更登记**：任何会话（含其它线程/流程库会话）写本项目文件后，必须用 `record-event.ps1 -Event external_change -Detail "<路径清单或摘要>"` 登记；总控每轮开始/恢复时以事实账核对 STATE 与磁盘是否一致，发现差异先更正 STATE 再继续。
 
 18. **回归分层（提速）**：dev 轮（模块开发员）完成标准 = 本模块单测 + 契约测试 + py_compile，**不要求全量回归**；全量回归只在装配轮与 G5 执行，用 `scripts/run-tests-parallel.ps1 -ProjectPath <项目> [-Shards 3] [-Retries 1]` 分片并行跑，失败分片自动串行重跑。G5 独立复核覆盖全量。
+19. **Agent Registry（STATE 增强）**：总控在 STATE 维护活跃 agent 表（task_name / 角色 / 任务书 / 心跳文件 / run / 状态）：spawn 时登记，interrupt 后移除或标记；配合并行批次，总控与用户一眼可见"谁活着、谁负责什么"。与调度账互补（快照 vs 事件流）。
+
+20. **快速模式（quick mode）**：小改动（修 bug / 小接口 / 小重构，不跨模块、不碰契约、验收可直接判定）走 `references/quick-mode.md`：需求 → 任务书（06-task 快速变体，含 Scope Lock）→ 实现（总控可直做，例外于"不代劳模块级工作"）→ 独立评审 → G-quick PASS → 提交；不产出 PRD/HLD/LLD。触碰契约/跨模块/涉及架构 → 回 standard 模式。
+
 ## 3. 运行监控（两本账）
 
 - 调度账 `docs/process/logs/orchestration.jsonl`：事件 = taskbook_write / lock_acquire / lock_release / spawn_start / spawn_success / spawn_fail / interrupt / gate / state_update / user_decision / agent_stale_warning / agent_stale_critical / agent_budget_exceeded / external_change；用 `scripts/record-event.ps1` 追加。
@@ -59,6 +63,8 @@
 - [ ] 确认 cwd = 项目根目录
 - [ ] 任务书 <task_name>.md 写入并预审（含预算节/接口速查）→ 镜像 current.md → record-event taskbook_write
 - [ ] 并行批次：按依赖图分批（每批 2~3 且槽位约束），每批全部 interrupt 后再开下一批
+- [ ] 任务书含 Scope Lock + 关键接口速查（预审必查）；落盘后同步镜像 current.md
+- [ ] STATE Agent Registry 登记/更新（spawn 登记，interrupt 移除/标记）
 - [ ] list_agents 查存活数 → acquire-launch-lock 抢锁
 - [ ] spawn（fork_turns=none，消息只写路径）→ record-event spawn_start/spawn_success → 后台启动 watchdog（-BudgetMin/-TempPrefix）
 - [ ] 只响应 watchdog 事件：3 分钟无首条心跳/心跳偏旧 → agent_stale_warning；8 分钟无心跳且无产出 → agent_stale_critical；超预算 → agent_budget_exceeded

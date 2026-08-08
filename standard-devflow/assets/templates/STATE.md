@@ -5,12 +5,19 @@
 - 产品：...
 - 当前史诗：EPIC-xx
 - 当前里程碑：Mx
+- 流程模式：standard / quick
 
 ## 当前阶段
 
 - 阶段：需求锚定 / 产品需求 / 架构设计 / 模块拆解 / 详细设计 / 开发实现 / 集成交付
 - 进行中的门禁：Gx
 - 下一步动作：...
+
+## Agent Registry（活跃 agent，总控维护）
+
+| task_name | 角色 | 任务书 | 心跳文件 | run | 状态 |
+|---|---|---|---|---|---|
+| mod01_r1 | 模块设计员 | docs/process/tasks/mod01_r1.md | docs/process/tasks/.heartbeat-mod01_r1 | run-9 | running |
 
 ## 门禁记录
 
