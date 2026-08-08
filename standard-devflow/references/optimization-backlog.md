@@ -90,3 +90,14 @@
 4. **检索优先**：会话需要细节时用检索（rg / Select-String）定位，不整篇读；INDEX 提供检索入口与关键词建议。
 5. **主控必读清单（上下文预算）**：主控会话只必读 STATE + INDEX + 当前阶段摘要 + 契约注册表接口行；PRD/HLD/LLD 全文由对应子 agent 按任务书读取。
 6. **产品级汇总层（用户视角，跨史诗）**：`docs/product/PRODUCT-PRD.md`（产品需求总览：跨史诗功能清单 + REQ 全局表 + 验收口径）、`docs/product/PRODUCT-HLD.md`（全局架构图/模块全景/接口全景 → 指向契约注册表）、`docs/product/ROADMAP.md`（里程碑与发布计划）。维护方式=门禁增量合并：G1 通过时 PRD 负责人把本史诗增量并入 PRODUCT-PRD，G2 通过时架构负责人并入 PRODUCT-HLD。**汇总只做集成视图、用链接引用细节、不复制全文**（避免双处维护）；用户读 PRODUCT-PRD 即得"PRD-01 + PRD-02"全局视角，想看单史诗细节再点链接。汇总文档带 version/hash 元数据（同 Artifact 元数据项）。
+
+## 验证记录（2026-08-08，Neo EPIC-07 B-4）
+
+- **A 模块并行：✅ 实弹验证通过**。账本证据：19:32:40 三个模块设计员同秒 spawn（run-59/60/61，lld_mod01/05/06），19:49:06 批2 两个同秒（run-62/63，lld_mod02/04）；命名任务书 5 份（tasks/lld_*_epic07_20260808.md）；独立心跳文件 5 份（.heartbeat-lld_*）；任务书含 `-HeartbeatFile` 与预算节；watchdog 事件带 fresh 字段（新版本生效）。
+- **B 回归分层：机制就位**。STATE 已记录"dev 轮模块单测+契约，全量归装配/G5"；EPIC-07 dev 轮未开始，端到端待后续验证。
+- **C 接口速查：模板就位、执行未落实**。B-4 任务书未见"关键接口速查"节（模板已有，总控未预填）——V2 在任务书预审清单中强制检查。
+- **E 回归分片：脚本就位**。Neo/scripts/run-tests-parallel.ps1 与 skill 源 hash 一致；账本暂无实际使用记录，待 dev/G5 轮验证。
+- **发现的小偏差（V2 附带小修）**：
+  1. current.md 镜像未随批次更新（19:32 批1 落盘后 current.md 仍指向旧轮次）→ 镜像兜底失效风险；总控每批落盘任务书时应同步镜像。
+  2. 心跳命令未带 `-TaskName`（心跳文件 task=child）→ 审计可读性差；任务书模板心跳命令补 `-TaskName <task_name>`。
+  3. 接口速查节未预填（见 C）。
