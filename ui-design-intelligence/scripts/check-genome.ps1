@@ -20,7 +20,7 @@ if (-not (Test-Path -LiteralPath $GenomePath)) {
     exit 1
 }
 
-$content = Get-Content -Raw -LiteralPath $GenomePath
+$content = Get-Content -Raw -Encoding UTF8 -LiteralPath $GenomePath
 
 $missing = @()
 foreach ($section in $requiredSections) {
@@ -51,7 +51,7 @@ if (-not (Test-Path -LiteralPath $DnaPath)) {
     Write-Host "[WARN] design-dna.json 不存在（无 token 层时允许，但实现约束会缺失）"
 } else {
     try {
-        $null = Get-Content -Raw -LiteralPath $DnaPath | ConvertFrom-Json
+        $null = Get-Content -Raw -Encoding UTF8 -LiteralPath $DnaPath | ConvertFrom-Json
         Write-Host "[PASS] design-dna.json 可解析"
     } catch {
         Write-Host "[FAIL] design-dna.json 不是合法 JSON: $($_.Exception.Message)"
