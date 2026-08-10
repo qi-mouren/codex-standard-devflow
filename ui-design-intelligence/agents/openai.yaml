@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI 设计智能"
+  short_description: "从参考 UI 提炼 Design Genome/Design DNA，注入代码 Agent 生成界面，再以原则级视觉评审闭环验收"
+  default_prompt: "Use $ui-design-intelligence to establish the project's UI design baseline (design-genome.md) and run the visual review loop for UI modules."

@@ -48,6 +48,16 @@ description: 大型项目标准开发流程：需求蒸馏、产品需求（PRD�
 - 环境适配与子 agent 执行协议：`references/environment-adaptation.md`
 - 角色卡素材（社区 MIT，原文）：`assets/role-cards/`；提炼速查：`references/role-cards.md`
 
+## UI 相关模块挂载（可选）
+
+史诗含 UI/前端模块且项目启用 `ui-design-intelligence` 时：
+
+- 详细设计：UI 模块任务书加载项目的 `design-genome.md` + `component-philosophy.md`，LLD 只写原则级设计约束。
+- 开发实现：UI 模块开发员先读 genome 再写代码，产出截图供视觉评审。
+- G5：增加视觉验收 lane，对照 genome 评审，verdict=alive 才算过；评审独立于开发。
+
+核心流程、门禁、红线不变；该 skill 只提供领域知识与评审回路。
+
 ## 子 Agent 强制规则
 
 以下工作**必须**由子 agent 执行。主会话（总控负责人）只做编排、门禁与状态同步，不得代劳：

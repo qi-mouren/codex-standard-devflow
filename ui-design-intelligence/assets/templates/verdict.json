@@ -1,0 +1,17 @@
+{
+  "verdict": "templated",
+  "target": "<路径或路由>",
+  "genome": ".agent/knowledge/design-genome.md",
+  "violations": [
+    {
+      "principle": "<genome 章节 + 原文>",
+      "finding": "<证据：截图区域/代码位置>",
+      "impact": "<用户影响>"
+    }
+  ],
+  "moves": ["<2-3 个原则级修正方向>"],
+  "screenshots": { "desktop": "", "mobile": "" },
+  "reviewer": "<评审角色>",
+  "accepted_by": null,
+  "timestamp": "<ISO8601>"
+}
