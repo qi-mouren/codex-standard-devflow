@@ -1,5 +1,7 @@
 {
   "verdict": "templated",
+  "mode": "text-only",
+  "perceptual": "pending",
   "target": "<路径或路由>",
   "genome": ".agent/knowledge/design-genome.md",
   "violations": [

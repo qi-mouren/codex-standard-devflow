@@ -51,3 +51,4 @@
 4. **动效准则接线**：动效评审/设计以 [emilkowalski/skills](https://github.com/emilkowalski/skills)（MIT，emil-design-eng + review-animations）为准绳；代码级检测用本 skill 的 `scripts/check-motion.ps1`。
 5. **动效证据采集**：录屏优先（无头浏览器 + DevTools Protocol / Playwright 录屏，或桌面录屏）；无录屏时至少保留动效清单 + `check-motion.ps1` 输出，并显式标注 motion gate=unverified。
 6. **reduce-motion**：实现必须提供 `prefers-reduced-motion` 降级；评审时对照 W3C 减少动态规范检查。
+7. **文本通道**：种子 DESIGN.md 与源码/CSS/DOM 都是文本证据，截图非必需；纯文本 Agent（如 DS-Flash）可全程跑通 U1-U4，多模态只影响感知复核精度（perceptual: pending）。

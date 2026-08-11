@@ -5,7 +5,8 @@ description: >-
   与 Design DNA（token 层），把人类审美转成 Agent 可执行的抽象知识，注入代码 Agent 生成界面，再以
   "对照 genome 的原则级评审"形成修改闭环。当用户要求"生成有设计感的界面/去掉 AI 味"、需要为项目建立 UI
   设计基线（design-genome.md）、评审界面是否符合设计语言，或 standard-devflow 的详细设计/开发实现/G5
-  涉及 UI 模块时使用。触发词：design genome、UI 设计基线、视觉评审、界面没设计感、按这个风格做。
+  涉及 UI 模块时使用。**纯文本 Agent 可直接使用（text-first）：种子 DESIGN.md 与源码/CSS/DOM 都是文本证据，
+  视觉/多模态能力是可选的升级通道。** 触发词：design genome、UI 设计基线、视觉评审、界面没设计感、按这个风格做。
 ---
 
 # UI Design Intelligence（UI 设计智能）
@@ -23,10 +24,17 @@ standard-devflow 的**领域挂载 skill**（与 analyze-idea、pil-diagram 同�
 ## 核心原则
 
 1. **不要学结果，学产生结果的方法。** 原则层（genome）禁止 px/hex/CSS 代码；具体数值只允许进入 token 层（design-dna.json）。
-2. **多模态模型 = 设计师与审稿人，文本 LLM = 工程师。** 多模态提炼审美规律，文本 Agent 负责实现。
+2. **文本优先，多模态是可选升级。** 默认用种子 DESIGN.md（纯文本）+ 源码/CSS/DOM 证据完成提炼与评审；具备视觉能力时再叠加多模态通道。
 3. **评审必须对照 genome，先给原则级意见，再谈具体修改。** 评审者不得评审自己的产出。
 4. **样本要跨产品、有数量。** 不复制单一产品；提炼共同规律。
 5. **静态验证形，动效验证势。** 截图只能证明"长什么样"；"怎么动"必须用录屏/帧序列或代码级检测证明。verdict=alive 必须动效 gate 通过。
+
+## 验收模式
+
+| 模式 | 适用 | 视觉依赖 | alive 含义 |
+|---|---|---|---|
+| text-only（默认） | 纯文本 Agent（如 DS-Flash） | 无 | 所有文本可验证门禁（genome 完整性、代码/DOM/aria 证据、check-motion）通过；`perceptual: pending` 显式标注 |
+| multimodal（升级） | 具备截图/录屏视觉能力 | 有 | 视觉 lane 确认后 `perceptual: confirmed`，去掉感知复核待办 |
 
 ## 产物
 
@@ -51,10 +59,12 @@ U0 选种子 → U1 提炼 Genome → U2 组件哲学 → U3 注入代码 Agent 
 
 ### U1 提炼 Design Genome
 
-- 有视觉模型：按 `references/analysis-prompt.md` 让多模态模型逐张分析样本，收敛为原则 → 产出 `design-genome.md` + `design-dna.json`（字段见 `references/genome-schema.md`）。
+- **文本通道（默认，无需视觉模型）**：
+  - 原则层：以种子 DESIGN.md（纯文本）+ taste-skill/前端准则为底稿起草 genome，顶部标注 `分析通道：文本（种子 + 准则）`；
+  - token 层：从实现源码/CSS 变量/设计 token 文件/DOM 计算样式提取具体值，禁止编造；取不到时以种子 token 为准并标注来源。
+- **多模态通道（可选升级）**：有视觉能力时，按 `references/analysis-prompt.md` 让视觉模型逐张分析截图，收敛为原则 → 产出 `design-genome.md` + `design-dna.json`（字段见 `references/genome-schema.md`）。
 - 样本含录屏/帧序列时，**必须**追加动效分析通道（`references/analysis-prompt.md` 第三遍提示词），把进入/退出/状态过渡/流式节奏收进 genome 的 Interaction & Motion Philosophy 与 token 层 motion 阶段表。
-- 样本只有静态截图时，genome 的动效章节标注 `motion: unobserved`，禁止凭静态截图推断动效。
-- 无视觉模型（显式降级）：以种子 DESIGN.md + taste-skill/前端准则为底稿起草 genome，**必须标注"未经过截图分析"**，交人类确认。
+- 没有视觉/录屏时，genome 的动效章节从种子动效规范提取并标注来源；种子也没有则标注 `motion: unobserved`，禁止推断。
 - 完成标准：genome 六个章节齐全、每条原则可判定、Anti-Patterns 非空；`scripts/check-genome.ps1` 通过。
 
 ### U2 生成 Component Philosophy
@@ -72,11 +82,11 @@ U0 选种子 → U1 提炼 Genome → U2 组件哲学 → U3 注入代码 Agent 
 
 ### U4 视觉评审闭环
 
-- 评审输入：截图 + genome + 实现代码 + **动效证据**（录屏/帧序列/动效清单/check-motion 输出）。
+- 评审输入：genome + 实现代码 + **证据**（text-only：源码/CSS/DOM/aria/check-motion 输出；multimodal：再加截图与录屏/帧序列）。
 - 评审分两条 lane：
-  - **静态 lane**：截图 → 原则级对照（`references/reviewer-prompt.md`）→ 本地确定性审查（impeccable `audit`/`critique`，如有）→ 可选多模态外部评审。
-  - **动效 lane**：代码级 `scripts/check-motion.ps1`（必跑，确定性）→ 有录屏/帧序列时用多模态模型评审动效（进入/退出/状态过渡/流式/反馈/减少动态）→ 汇总到 verdict 的 motion gate。
-- 输出 `verdict.json`：alive（通过，含 motion gate=pass）/ templated（正确但平庸，违反 genome）/ flat（无层级无动效无身份）。
+  - **静态 lane**：text-only 用代码/DOM 证据对照 genome（`references/reviewer-prompt.md` 文本模式）；multimodal 再叠加截图原则级对照与本地确定性审查（impeccable `audit`/`critique`，如有）。
+  - **动效 lane**：代码级 `scripts/check-motion.ps1`（必跑，确定性）→ 有录屏/帧序列时用多模态模型评审动效 → 汇总到 verdict 的 motion gate。
+- 输出 `verdict.json`：alive（通过，含 motion gate=pass；text-only 模式另标 `perceptual: pending`）/ templated（正确但平庸，违反 genome）/ flat（无层级无动效无身份）。
 - 非 alive：给 2-3 个原则级修正方向 → 回 U3 修改 → 重新评审，闭环直至 alive 或人类显式接受降级。
 
 ### U5 G5 验收挂载
@@ -108,7 +118,7 @@ U0 选种子 → U1 提炼 Genome → U2 组件哲学 → U3 注入代码 Agent 
 
 1. genome 定稿前禁止 UI 实现；定稿后禁止原地改，变更走版本 +1。
 2. 原则层禁止 px/hex/CSS；具体值只进 token 层（design-dna.json）。
-3. 无多模态时必须显式降级并标注，禁止假装分析过截图。
+3. text-only 模式必须如实标注 `mode: text-only` 与 `perceptual: pending`，禁止伪装成看过截图/录屏。
 4. 评审先讲原则违反，再谈修改；禁止第一步就抛像素级修改。
 5. 评审者不得评审自己产出（含代码 Agent 自评）。
 6. 样本必须跨产品，禁止单产品复制式提炼。
