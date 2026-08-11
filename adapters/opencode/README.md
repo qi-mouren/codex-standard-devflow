@@ -64,6 +64,8 @@ node docs/process/.opencode-heartbeat.mjs "<当前动作>"
 
 **已知限制**：opencode 插件钩子不拦截子 agent（task 子会话）的工具调用（上游 issue #5894 未关闭），所以插件只能覆盖 primary；子 agent 心跳必须走显式命令。不要依赖插件判断子 agent 存活。
 
+**流程库 Node 套件**：完整的跨平台脚本套件（check-flow / watchdog / record-event / lock / long-cmd / run-tests-parallel / analyze-flow / consolidate-docs）在 `vibecoding-orchestration/scripts/node/`，与 PS 版同文件语义，macOS/Linux 用户可直接使用（Node 20+，opencode 自带）。
+
 ## 快速开始（新项目）
 
 1. 总控会话（devflow-controller / build）按流程产出需求锚点 → PRD → HLD → 拆解 → LLD。
