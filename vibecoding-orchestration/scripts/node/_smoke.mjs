@@ -124,8 +124,12 @@ if (!cliHb.includes('"task": "cli_r1"')) {
   console.error("[FAIL] 适配器心跳 CLI 覆盖未生效");
   process.exit(1);
 }
+if (!cliHb.includes('"note": "CLI 隔离"')) {
+  console.error("[FAIL] 适配器心跳 note 被 flag 值污染（应为 CLI 隔离）");
+  process.exit(1);
+}
 passed++;
-console.log("[PASS] 适配器心跳 CLI 覆盖写入独立心跳文件");
+console.log("[PASS] 适配器心跳 CLI 覆盖写入独立心跳文件且 note 正确");
 
 rmSync(root, { recursive: true, force: true });
 console.log(`\n全部通过：${passed} 项检查`);

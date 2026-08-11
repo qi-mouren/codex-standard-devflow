@@ -25,7 +25,9 @@ function flagValue(name) {
   return i >= 0 ? args[i + 1] : undefined;
 }
 const hasCli = flagNames.some((f) => args.includes(f));
-const note = args.find((a) => !a.startsWith("--") && !flagNames.includes(a)) ?? "heartbeat";
+// 先收集 flag 值再排除，避免 --task-name dev02_impl 把 dev02_impl 误当 note。
+const flagValues = new Set(flagNames.map((f) => flagValue(f)).filter(Boolean));
+const note = args.find((a) => !a.startsWith("--") && !flagNames.includes(a) && !flagValues.has(a)) ?? "heartbeat";
 
 let cfg = null;
 try {
