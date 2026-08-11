@@ -1,7 +1,7 @@
 # 角色卡（来自社区 awesome-codex-subagents）
 
 本目录收录从 [VoltAgent/awesome-codex-subagents](https://github.com/VoltAgent/awesome-codex-subagents)
-（MIT License）挑选的角色卡原文，作为 standard-devflow 各角色提示词的参考素材。
+（MIT License）挑选的角色卡原文，作为 vibecoding-orchestration 各角色提示词的参考素材。
 提炼后的中文速查见 `references/role-cards.md`，质量纪律已融合进 `references/roles.md`。
 
 ## 收录清单

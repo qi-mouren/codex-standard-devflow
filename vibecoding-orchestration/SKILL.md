@@ -1,9 +1,11 @@
 ---
-name: standard-devflow
-description: 大型项目标准开发流程：需求蒸馏、产品需求（PRD）、架构设计（HLD）、模块拆解、详细设计（LLD）、契约管理、开发实现与集成，含门禁 G0-G5、强制子 agent 编排（独立评审、模块设计员、模块开发员）、Git 分支规范与史诗/里程碑切分。当用户开始新项目或新史诗、需要蒸馏需求锚点、撰写产品需求/架构设计/详细设计、拆解模块范围、冻结契约、管理开发任务、执行门禁评审、切分史诗与里程碑、恢复跨会话项目状态，或在多 agent 环境下需要并行实现与独立评审时使用本 skill。
+name: vibecoding-orchestration
+description: Vibe Coding 流程编排（vibecoding-orchestration）：从 vibe coding 到可交付的大型项目标准开发流程——需求蒸馏、产品需求（PRD）、架构设计（HLD）、模块拆解、详细设计（LLD）、契约管理、开发实现与集成，含门禁 G0-G5、强制子 agent 编排（独立评审、模块设计员、模块开发员）、Git 分支规范与史诗/里程碑切分。当用户开始新项目或新史诗、需要蒸馏需求锚点、撰写产品需求/架构设计/详细设计、拆解模块范围、冻结契约、管理开发任务、执行门禁评审、切分史诗与里程碑、恢复跨会话项目状态，或在多 agent 环境下需要并行实现与独立评审时使用本 skill。
 ---
 
-# Standard DevFlow（标准开发流程）
+# Vibecoding Orchestration（vibe coding 流程编排）
+
+> 曾用名 standard-devflow；新会话一律使用 `vibecoding-orchestration`。
 
 ## 命名对照（旧代号 → 新名称）
 
@@ -47,6 +49,16 @@ description: 大型项目标准开发流程：需求蒸馏、产品需求（PRD�
 - Git 分支与 tag 规范：`references/git-flow.md`
 - 环境适配与子 agent 执行协议：`references/environment-adaptation.md`
 - 角色卡素材（社区 MIT，原文）：`assets/role-cards/`；提炼速查：`references/role-cards.md`
+
+## UI 相关模块挂载（可选）
+
+史诗含 UI/前端模块且项目启用 `ui-design-intelligence` 时：
+
+- 详细设计：UI 模块任务书加载项目的 `design-genome.md` + `component-philosophy.md`，LLD 只写原则级设计约束。
+- 开发实现：UI 模块开发员先读 genome 再写代码，产出截图供视觉评审。
+- G5：增加视觉验收 lane，对照 genome 评审，verdict=alive 才算过；含动效的 UI 需 motion gate=pass（录屏/帧序列或 `check-motion.ps1`）；评审独立于开发。
+
+核心流程、门禁、红线不变；该 skill 只提供领域知识与评审回路。
 
 ## 子 Agent 强制规则
 

@@ -48,7 +48,7 @@ if (Test-Path $runsDir) {
     }
 }
 
-Write-Line "==== standard-devflow 运行复盘 ===="
+Write-Line "==== vibecoding-orchestration 运行复盘 ===="
 Write-Line ("生成时间: " + (Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))
 Write-Line ("日志目录: " + $logsDir)
 Write-Line ""
