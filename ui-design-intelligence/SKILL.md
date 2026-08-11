@@ -4,7 +4,7 @@ description: >-
   让纯文本 LLM Agent 获得高质量 UI 设计能力的闭环流程。用多模态模型从参考 UI 提炼 Design Genome（原则层）
   与 Design DNA（token 层），把人类审美转成 Agent 可执行的抽象知识，注入代码 Agent 生成界面，再以
   "对照 genome 的原则级评审"形成修改闭环。当用户要求"生成有设计感的界面/去掉 AI 味"、需要为项目建立 UI
-  设计基线（design-genome.md）、评审界面是否符合设计语言，或 standard-devflow 的详细设计/开发实现/G5
+  设计基线（design-genome.md）、评审界面是否符合设计语言，或 vibecoding-orchestration 的详细设计/开发实现/G5
   涉及 UI 模块时使用。**纯文本 Agent 可直接使用（text-first）：种子 DESIGN.md 与源码/CSS/DOM 都是文本证据，
   视觉/多模态能力是可选的升级通道。** 触发词：design genome、UI 设计基线、视觉评审、界面没设计感、按这个风格做。
 ---
@@ -13,9 +13,9 @@ description: >-
 
 ## 定位
 
-standard-devflow 的**领域挂载 skill**（与 analyze-idea、pil-diagram 同层，不改变流程本身）。当史诗含 UI/前端模块时，在三个位置挂载：
+vibecoding-orchestration 的**领域挂载 skill**（与 analyze-idea、pil-diagram 同层，不改变流程本身）。当史诗含 UI/前端模块时，在三个位置挂载：
 
-| standard-devflow 阶段 | 挂载动作 |
+| vibecoding-orchestration 阶段 | 挂载动作 |
 |---|---|
 | 详细设计（LLD） | UI 模块任务书注明加载 `design-genome.md` + `component-philosophy.md`；LLD 写原则级设计约束，禁止写死像素值 |
 | 开发实现 | UI 模块开发员先读 genome 再写代码；产出截图供评审 |
@@ -123,7 +123,7 @@ U0 选种子 → U1 提炼 Genome → U2 组件哲学 → U3 注入代码 Agent 
 5. 评审者不得评审自己产出（含代码 Agent 自评）。
 6. 样本必须跨产品，禁止单产品复制式提炼。
 7. **静态评审不能证明动效通过。** 无动效证据（录屏/帧序列/check-motion 输出）时，motion gate=unverified，verdict 不得为 alive。
-8. 本 skill 只做 UI 设计智能；流程门禁、任务书、状态管理一律走 standard-devflow。
+8. 本 skill 只做 UI 设计智能；流程门禁、任务书、状态管理一律走 vibecoding-orchestration。
 
 ## 来源与署名
 

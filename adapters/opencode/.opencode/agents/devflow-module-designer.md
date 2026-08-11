@@ -24,7 +24,7 @@ permission:
 - HLD：`docs/02-hld/`
 - 模块范围：`docs/03-scope/`
 - 契约注册表：`docs/process/contracts-registry.md`（已冻结，只读）
-- 流程文档：`standard-devflow/references/workflow.md`、`roles.md`（或项目内副本）
+- 流程文档：`vibecoding-orchestration/references/workflow.md`、`roles.md`（或项目内副本）
 
 ## 执行规则
 

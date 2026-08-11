@@ -14,9 +14,9 @@
   // 若只拷了 .opencode/，则把 workflow/roles/gates 拷到项目 docs/process/devflow/ 并改路径。
   "instructions": [
     "AGENTS.md",
-    "standard-devflow/references/workflow.md",
-    "standard-devflow/references/roles.md",
-    "standard-devflow/references/gates.md",
-    "standard-devflow/references/environment-adaptation.md"
+    "vibecoding-orchestration/references/workflow.md",
+    "vibecoding-orchestration/references/roles.md",
+    "vibecoding-orchestration/references/gates.md",
+    "vibecoding-orchestration/references/environment-adaptation.md"
   ]
 }

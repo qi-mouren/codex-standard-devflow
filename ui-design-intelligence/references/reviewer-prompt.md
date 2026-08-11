@@ -41,7 +41,7 @@
 
 ## 评审者纪律
 
-- 评审者与开发者隔离（standard-devflow 红线：产出的节点不能当自己的裁判）。
+- 评审者与开发者隔离（vibecoding-orchestration 红线：产出的节点不能当自己的裁判）。
 - 未截图、无法看到实际渲染时，verdict 不得为 alive（保守判定 templated）。
 - **motion gate 未验证（无录屏/帧序列且 check-motion 未跑）时，verdict 不得为 alive。**
 - text-only 模式禁止输出"看起来很好/很高级"等感知结论；感知验证交给 perceptual=pending 的待办。

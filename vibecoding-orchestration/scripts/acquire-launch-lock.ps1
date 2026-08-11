@@ -21,6 +21,7 @@ if ($TaskName -notmatch '^[a-z0-9_]+$') {
 
 $lockRoot = $null
 foreach ($candidate in @((Join-Path 'C:\tmp' 'standard-devflow-locks'), (Join-Path $env:TEMP 'standard-devflow-locks'))) {
+    # 锁目录保留旧名（兼容仍在跑的老会话抢同一把锁）；改名只影响展示层，不影响锁语义。
     try { New-Item -ItemType Directory -Path $candidate -Force -ErrorAction Stop | Out-Null; $lockRoot = $candidate; break } catch {}
 }
 if (-not $lockRoot) { throw 'no writable lock directory' }

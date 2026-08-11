@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vibe Coding 流程编排"
+  short_description: "从 vibe coding 到可交付：需求、架构、拆解、详细设计、契约、实现与门禁，强制子 agent 并行编排"
+  default_prompt: "Use $vibecoding-orchestration to run the development workflow for a new epic, from requirement distillation to integration."

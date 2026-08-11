@@ -2,7 +2,7 @@
 
 流程核心与平台无关：阶段、门禁、角色、红线在任何 agent 上都一样。真正有差异的只有一层——**子 agent 编排能力**。本目录把这一层抽成契约：
 
-- 官方维护：Codex 原生实现（本 skill 核心 + `standard-devflow/references/environment-adaptation.md`）与一个 opencode 样板（`adapters/opencode/`）。
+- 官方维护：Codex 原生实现（本 skill 核心 + `vibecoding-orchestration/references/environment-adaptation.md`）与一个 opencode 样板（`adapters/opencode/`）。
 - 社区贡献：其余平台从 `adapters/_template/` 起步，按本文件验收后提交 PR。
 
 ## 六项能力契约
@@ -56,7 +56,7 @@
 
 | 平台 | 状态 | 位置 |
 |---|---|---|
-| Codex | 官方原生 | 本 skill + `standard-devflow/references/environment-adaptation.md` |
+| Codex | 官方原生 | 本 skill + `vibecoding-orchestration/references/environment-adaptation.md` |
 | opencode | 官方样板（待实机验收） | `adapters/opencode/` |
 | 其他 | 社区贡献 | `adapters/<platform>/`（从 `_template` 起步） |
 

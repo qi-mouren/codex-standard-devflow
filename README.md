@@ -1,6 +1,8 @@
-# Codex 大型项目标准开发流程（standard-devflow）
+# Vibecoding Orchestration（vibe coding 流程编排）
 
-一套开箱即用的 Codex 大型项目标准开发流程：**需求蒸馏 → 产品需求（PRD）→ 架构设计（HLD）→ 模块拆解 → 详细设计（LLD）→ 契约冻结 → 开发实现 → 集成交付**，内置门禁 G0–G5、Git 分支规范、史诗/里程碑切分与跨会话状态持久化。
+一套开箱即用的大型项目流程编排，从 vibe coding 到可交付：**需求蒸馏 → 产品需求（PRD）→ 架构设计（HLD）→ 模块拆解 → 详细设计（LLD）→ 契约冻结 → 开发实现 → 集成交付**，内置门禁 G0–G5、强制子 agent 编排、Git 分支规范、史诗/里程碑切分与跨会话状态持久化。
+
+> 曾用名：standard-devflow（v2 前）。新项目一律使用 `vibecoding-orchestration`。
 
 ## 核心设计
 
@@ -35,28 +37,28 @@
 ### 方式 A：手动复制（Windows）
 
 ```powershell
-Copy-Item -LiteralPath '.\standard-devflow' -Destination "$env:CODEX_HOME\skills\standard-devflow" -Recurse -Force
+Copy-Item -LiteralPath '.\vibecoding-orchestration' -Destination "$env:CODEX_HOME\skills\vibecoding-orchestration" -Recurse -Force
 ```
 
-> 注意：目标目录已存在时，PowerShell 的 `Copy-Item` 会把源目录**嵌套**复制进目标目录（`standard-devflow\standard-devflow\`）。如果出现嵌套，请删除内层重复目录，或用以下方式逐项覆盖：
+> 注意：目标目录已存在时，PowerShell 的 `Copy-Item` 会把源目录**嵌套**复制进目标目录（`vibecoding-orchestration\vibecoding-orchestration\`）。如果出现嵌套，请删除内层重复目录，或用以下方式逐项覆盖：
 
 ```powershell
-$src = '.\standard-devflow'
-$dst = "$env:CODEX_HOME\skills\standard-devflow"
+$src = '.\vibecoding-orchestration'
+$dst = "$env:CODEX_HOME\skills\vibecoding-orchestration"
 Get-ChildItem -LiteralPath $src | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $dst -Recurse -Force }
 ```
 
 ### 方式 B：使用 skill-installer
 
 ```powershell
-python "$env:CODEX_HOME\skills\.system\skill-installer\scripts\install-skill-from-github.py" https://github.com/qi-mouren/codex-standard-devflow --path skills/standard-devflow
+python "$env:CODEX_HOME\skills\.system\skill-installer\scripts\install-skill-from-github.py" https://github.com/qi-mouren/vibecoding-orchestration --path skills/vibecoding-orchestration
 ```
 
 ### 校验
 
 ```powershell
 $env:PYTHONUTF8 = '1'
-python "$env:CODEX_HOME\skills\.system\skill-creator\scripts\quick_validate.py" "$env:CODEX_HOME\skills\standard-devflow"
+python "$env:CODEX_HOME\skills\.system\skill-creator\scripts\quick_validate.py" "$env:CODEX_HOME\skills\vibecoding-orchestration"
 ```
 
 ### 全局规则
@@ -66,7 +68,7 @@ python "$env:CODEX_HOME\skills\.system\skill-creator\scripts\quick_validate.py" 
 ## 使用
 
 1. 新项目只需 3 行 `AGENTS.md`：产品名、当前史诗、STATE 指针（`docs/process/STATE.md`）。
-2. 会话中说「用 standard-devflow 跑这个史诗」，skill 自动加载。
+2. 会话中说「用 vibecoding-orchestration 跑这个史诗」，skill 自动加载。
 3. 每次开工先读 `docs/process/STATE.md`，运行 `scripts/check-flow.ps1` 确认流程健康。
 
 ## 多平台适配
@@ -81,7 +83,7 @@ python "$env:CODEX_HOME\skills\.system\skill-creator\scripts\quick_validate.py" 
 
 ```
 adapters/                      # 多平台适配：契约 + opencode 样板 + 社区模板
-standard-devflow/
+vibecoding-orchestration/
 ├── SKILL.md                  # skill 入口：触发条件 + 流程总览 + 红线
 ├── agents/openai.yaml        # UI 元数据
 ├── references/

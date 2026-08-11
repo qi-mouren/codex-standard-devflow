@@ -2,7 +2,7 @@
 
 来源：[VoltAgent/awesome-codex-subagents](https://github.com/VoltAgent/awesome-codex-subagents)
 （MIT，原文见 `assets/role-cards/`）。本文件把社区角色卡提炼后映射到
-standard-devflow 各角色，供总控写任务书、子 agent 自检时参考。
+vibecoding-orchestration 各角色，供总控写任务书、子 agent 自检时参考。
 
 共同精神：**证据驱动的质量与风险降低，不是检查表表演**。
 
