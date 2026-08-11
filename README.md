@@ -1,4 +1,4 @@
-🌐 **Language:** [English](README.en.md) · [Chinese](README.md)
+🌐 **Language:** [English](README.en.md) · [中文](README.md)
 
 # Vibecoding Orchestration（vibe coding 全流程编排）
 
