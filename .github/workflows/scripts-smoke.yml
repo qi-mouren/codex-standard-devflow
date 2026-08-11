@@ -1,0 +1,24 @@
+name: devflow-scripts-smoke
+
+on:
+  push:
+    paths:
+      - "vibecoding-orchestration/scripts/**"
+      - ".github/workflows/scripts-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: smoke (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run node script smoke
+        run: node vibecoding-orchestration/scripts/node/_smoke.mjs
