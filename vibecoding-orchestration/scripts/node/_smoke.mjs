@@ -131,6 +131,15 @@ if (!cliHb.includes('"note": "CLI 隔离"')) {
 passed++;
 console.log("[PASS] 适配器心跳 CLI 覆盖写入独立心跳文件且 note 正确");
 
+run(adapterHb, ["--task-name", "cli_r2", "--heartbeat-file", "docs/process/tasks/.heartbeat-cli_r2", "--note", "显式 note flag"], 0, root);
+const cliHb2 = readFileSync(join(root, "docs/process/tasks/.heartbeat-cli_r2"), "utf8");
+if (!cliHb2.includes('"note": "显式 note flag"')) {
+  console.error("[FAIL] 适配器心跳 --note flag 未生效");
+  process.exit(1);
+}
+passed++;
+console.log("[PASS] 适配器心跳 --note flag 生效");
+
 rmSync(root, { recursive: true, force: true });
 console.log(`\n全部通过：${passed} 项检查`);
 process.exit(0);
