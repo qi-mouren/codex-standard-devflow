@@ -40,6 +40,10 @@ export function nowIso() {
   return new Date().toISOString();
 }
 
+export function stripBom(s) {
+  return s && s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
+}
+
 export function taskNameOk(n) {
   return /^[a-z0-9_]+$/.test(n ?? "");
 }
@@ -88,7 +92,7 @@ export function walkFiles(root, { skipSegments = [], filter = () => true } = {})
 
 export function readJsonFile(p) {
   try {
-    return JSON.parse(readFileSync(p, "utf8"));
+    return JSON.parse(stripBom(readFileSync(p, "utf8")));
   } catch {
     return null;
   }

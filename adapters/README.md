@@ -57,7 +57,7 @@
 | 平台 | 状态 | 位置 |
 |---|---|---|
 | Codex | 官方原生 | 本 skill + `vibecoding-orchestration/references/environment-adaptation.md` |
-| opencode | 官方样板（待实机验收） | `adapters/opencode/` |
+| opencode | 官方样板（实机验收通过 2026-08-12） | `adapters/opencode/` |
 | 其他 | 社区贡献 | `adapters/<platform>/`（从 `_template` 起步） |
 
 ## 社区贡献流程

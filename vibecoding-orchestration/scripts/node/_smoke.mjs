@@ -6,18 +6,18 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptsDir = fileURLToPath(new URL(".", import.meta.url));
 const node = process.execPath;
 let passed = 0;
 
-function run(script, args, expect = 0) {
-  const p = join(scriptsDir, script);
+function run(script, args, expect = 0, cwd = undefined) {
+  const p = isAbsolute(script) ? script : join(scriptsDir, script);
   const label = `${script} ${args.join(" ")}`;
   try {
-    const out = execFileSync(node, [p, ...args], { encoding: "utf8" });
+    const out = execFileSync(node, [p, ...args], { encoding: "utf8", cwd });
     passed++;
     console.log(`[PASS] ${label}`);
     return out;
@@ -102,6 +102,30 @@ run("check-flow.mjs", ["--project-path", root]);
 run("consolidate-docs.mjs", ["--project-path", root, "--force"]);
 expectFile(join(root, "docs/process/INDEX.md"));
 expectFile(join(root, "docs/process/consolidation-plan.md"));
+
+// opencode 适配器心跳：BOM 容错 + CLI 覆盖参数（并行隔离）
+const adapterHb = join(scriptsDir, "..", "..", "..", "adapters", "opencode", "scripts", "heartbeat.mjs");
+writeFileSync(
+  join(root, "docs/process/.devflow-heartbeat.json"),
+  "\uFEFF" + JSON.stringify({
+    projectPath: ".",
+    taskName: "cfg_r1",
+    heartbeatFile: "docs/process/tasks/.heartbeat-cfg_r1",
+    logFile: "docs/process/logs/runs/run-cfg.jsonl",
+  }),
+  "utf8"
+);
+run(adapterHb, ["BOM 配置默认"], 0, root);
+expectFile(join(root, "docs/process/tasks/.heartbeat-cfg_r1"));
+run(adapterHb, ["--task-name", "cli_r1", "--heartbeat-file", "docs/process/tasks/.heartbeat-cli_r1", "--log-file", "docs/process/logs/runs/run-cli.jsonl", "CLI 隔离"], 0, root);
+expectFile(join(root, "docs/process/tasks/.heartbeat-cli_r1"));
+const cliHb = readFileSync(join(root, "docs/process/tasks/.heartbeat-cli_r1"), "utf8");
+if (!cliHb.includes('"task": "cli_r1"')) {
+  console.error("[FAIL] 适配器心跳 CLI 覆盖未生效");
+  process.exit(1);
+}
+passed++;
+console.log("[PASS] 适配器心跳 CLI 覆盖写入独立心跳文件");
 
 rmSync(root, { recursive: true, force: true });
 console.log(`\n全部通过：${passed} 项检查`);

@@ -23,14 +23,14 @@ permission:
 - PRD：`docs/01-prd/`
 - HLD：`docs/02-hld/`
 - 模块范围：`docs/03-scope/`
-- 契约注册表：`docs/process/contracts-registry.md`（已冻结，只读）
+- 契约注册表：`contracts/contracts-registry.md`（已冻结，只读）
 - 流程文档：`vibecoding-orchestration/references/workflow.md`、`roles.md`（或项目内副本）
 
 ## 执行规则
 
 - 只写自己模块的 LLD 与任务书 Scope Lock 允许的文件；禁止改其他模块文档。
 - 契约：新增/修改接口必须同步到契约注册表，但已冻结契约禁止原地修改——发现冲突写变更请求，禁止自行改。
-- 每个工具步骤后或最多每 60 秒执行心跳：`node docs/process/.opencode-heartbeat.mjs "<当前动作>"`；预计超过 60 秒的命令用 `LONG: <动作>` 前缀。
+- 心跳以任务书命令为准；默认 `node docs/process/.opencode-heartbeat.mjs "<当前动作>"`，并行轮任务书会给 `--task-name/--heartbeat-file/--log-file` 覆盖参数（每 agent 独立心跳文件，禁止共用）；预计超过 60 秒的命令用 `LONG: <动作>` 前缀。
 - 禁止 spawn 子 agent、禁止按总控角色行动、禁止自评。
 
 ## 产出与完成
