@@ -69,9 +69,18 @@ python "$env:CODEX_HOME\skills\.system\skill-creator\scripts\quick_validate.py" 
 2. 会话中说「用 standard-devflow 跑这个史诗」，skill 自动加载。
 3. 每次开工先读 `docs/process/STATE.md`，运行 `scripts/check-flow.ps1` 确认流程健康。
 
+## 多平台适配
+
+流程核心与平台无关；真正有差异的只有「子 agent 编排能力」。本仓库提供：
+
+- [适配契约与验收清单](adapters/README.md)：六项能力（spawn / message / interrupt / list / shell / heartbeat）+ 社区贡献流程。
+- [opencode 样板适配器](adapters/opencode/README.md)：角色卡、心跳脚本与配置示例，官方维护（待实机验收）。
+- [空模板](adapters/_template/README.md)：给其他平台（zcode / claude / 其他）从零起步。
+
 ## 仓库结构
 
 ```
+adapters/                      # 多平台适配：契约 + opencode 样板 + 社区模板
 standard-devflow/
 ├── SKILL.md                  # skill 入口：触发条件 + 流程总览 + 红线
 ├── agents/openai.yaml        # UI 元数据

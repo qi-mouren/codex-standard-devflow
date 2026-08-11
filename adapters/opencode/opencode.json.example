@@ -1,0 +1,22 @@
+{
+  // 复制为项目根 opencode.json，与已有配置合并（JSONC 允许注释）。
+  // $schema 可帮助编辑器校验。
+  "$schema": "https://opencode.ai/config.json",
+
+  // 总控可开子 agent，子 agent 禁止再开：原生对齐"禁止递归"红线。
+  "subagent_depth": 1,
+
+  // 默认主 agent 落到总控角色（devflow-controller 是 primary）。
+  "default_agent": "devflow-controller",
+
+  // 流程文档注入所有会话（含子 agent）。
+  // 若整个流程库在项目里（如克隆本仓库），指向 references/；
+  // 若只拷了 .opencode/，则把 workflow/roles/gates 拷到项目 docs/process/devflow/ 并改路径。
+  "instructions": [
+    "AGENTS.md",
+    "standard-devflow/references/workflow.md",
+    "standard-devflow/references/roles.md",
+    "standard-devflow/references/gates.md",
+    "standard-devflow/references/environment-adaptation.md"
+  ]
+}
