@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // devflow-heartbeat.mjs — 子 agent 显式心跳（跨平台，Node 即可）
 // 用法:
-//   node docs/process/.opencode-heartbeat.mjs "<正在做什么>"
-//   node docs/process/.opencode-heartbeat.mjs --task-name mod01_r1 --heartbeat-file docs/process/tasks/.heartbeat-mod01_r1 --log-file docs/process/logs/runs/run-01.jsonl "<正在做什么>"
+//   node docs/process/.opencode-heartbeat.mjs --note "<正在做什么>"
+//   node docs/process/.opencode-heartbeat.mjs "<正在做什么>"   # 位置参数兼容
+//   node docs/process/.opencode-heartbeat.mjs --task-name mod01_r1 --heartbeat-file docs/process/tasks/.heartbeat-mod01_r1 --log-file docs/process/logs/runs/run-01.jsonl --note "<正在做什么>"
 // 配置(可选默认值): docs/process/.devflow-heartbeat.json（BOM 容错；CLI 参数优先）
 //   { "projectPath": ".", "taskName": "mod01_r1",
 //     "heartbeatFile": "docs/process/tasks/.heartbeat-mod01_r1",
@@ -19,15 +20,21 @@ function stripBom(s) {
 
 const root = process.cwd();
 const args = process.argv.slice(2);
-const flagNames = ["--project-path", "--task-name", "--heartbeat-file", "--log-file"];
-function flagValue(name) {
-  const i = args.indexOf(name);
-  return i >= 0 ? args[i + 1] : undefined;
+const flagNames = ["--project-path", "--task-name", "--heartbeat-file", "--log-file", "--note"];
+// 逐个 flag 消费自己的值；剩余非 flag 参数才视为位置参数（note 兼容）。
+const values = {};
+const positionals = [];
+for (let i = 0; i < args.length; i++) {
+  const a = args[i];
+  if (flagNames.includes(a)) {
+    values[a] = args[i + 1];
+    i++;
+  } else if (!a.startsWith("--")) {
+    positionals.push(a);
+  }
 }
-const hasCli = flagNames.some((f) => args.includes(f));
-// 先收集 flag 值再排除，避免 --task-name dev02_impl 把 dev02_impl 误当 note。
-const flagValues = new Set(flagNames.map((f) => flagValue(f)).filter(Boolean));
-const note = args.find((a) => !a.startsWith("--") && !flagNames.includes(a) && !flagValues.has(a)) ?? "heartbeat";
+const hasCli = Object.keys(values).length > 0;
+const note = values["--note"] ?? positionals[0] ?? "heartbeat";
 
 let cfg = null;
 try {
@@ -40,14 +47,14 @@ if (!cfg && !hasCli) {
   process.exit(2);
 }
 
-const projectPath = flagValue("--project-path") ?? cfg?.projectPath ?? ".";
-const task = flagValue("--task-name") ?? cfg?.taskName ?? "child";
+const projectPath = values["--project-path"] ?? cfg?.projectPath ?? ".";
+const task = values["--task-name"] ?? cfg?.taskName ?? "child";
 if (!/^[a-z0-9_]+$/.test(task)) {
   console.error(`invalid task_name: '${task}' (only lowercase letters, digits, underscores allowed)`);
   process.exit(4);
 }
-const hbArg = flagValue("--heartbeat-file") ?? cfg?.heartbeatFile ?? "docs/process/tasks/.heartbeat";
-const logArg = flagValue("--log-file") ?? cfg?.logFile ?? "";
+const hbArg = values["--heartbeat-file"] ?? cfg?.heartbeatFile ?? "docs/process/tasks/.heartbeat";
+const logArg = values["--log-file"] ?? cfg?.logFile ?? "";
 
 const project = resolve(root, projectPath);
 const hbFile = isAbsolute(hbArg) ? hbArg : resolve(project, hbArg);
