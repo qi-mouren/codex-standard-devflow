@@ -1,6 +1,8 @@
+🌐 **Language / 语言：** [English](README.en.md) · [中文](README.md)
+
 # Vibecoding Orchestration
 
-> [中文](README.md) · formerly standard-devflow
+> formerly standard-devflow
 
 A multi-agent orchestration framework that turns "vibe coding" into a **deliverable pipeline**: three modes for small changes, medium features, and large projects — all sharing the same gate and contract discipline.
 
