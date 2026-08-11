@@ -38,6 +38,16 @@
 
 20. **快速模式（quick mode）**：小改动（修 bug / 小接口 / 小重构，不跨模块、不碰契约、验收可直接判定）走 `references/quick-mode.md`：需求 → 任务书（06-task 快速变体，含 Scope Lock）→ 实现（总控可直做，例外于"不代劳模块级工作"）→ 独立评审 → G-quick PASS → 提交；不产出 PRD/HLD/LLD。触碰契约/跨模块/涉及架构 → 回 standard 模式。
 
+21. **跨平台脚本运行时（Node 版）**：`scripts/node/*.mjs` 是 PS 版的全量跨平台移植（macOS/Linux/Windows，依赖 Node 20+；opencode 自带 Node）。映射与参数：
+    - `update-heartbeat.mjs` ↔ `update-heartbeat.ps1`：`--project-path / --task-name / --log-file / --heartbeat-file / --note`
+    - `record-event.mjs` ↔ `record-event.ps1`：`--project-path / --event / --task-name / --run / --detail`
+    - `acquire-launch-lock.mjs` / `release-launch-lock.mjs` ↔ 同名 PS：`--project-path / --task-name / --active-agent-count / --max-concurrent-threads / --timeout-seconds / --lock-ttl-minutes`；新增可选 `--lock-root`（测试/多锁目录用，默认与 PS 版同一全局锁目录 `standard-devflow-locks`，跨平台兼容）
+    - `watchdog.mjs` ↔ `watchdog.ps1`：`--once` 取证；后台监控用 `node watchdog.mjs ...` 启动
+    - `long-cmd.mjs` ↔ `long-cmd.ps1`：Windows 用 `powershell.exe -Command`（保持 PS 执行语义），macOS/Linux 用 `/bin/sh -c`；cwd 固定项目根
+    - `check-flow.mjs` / `analyze-flow.mjs` / `run-tests-parallel.mjs` / `consolidate-docs.mjs` ↔ 同名 PS；`analyze-flow` 的 `--out-file` 相对项目根解析
+    - 冒烟：`scripts/node/_smoke.mjs`（本地 + GitHub Actions 三平台 windows/macos/ubuntu 矩阵）
+    使用规则：Windows Codex 会话可继续用 PS 版；macOS/Linux 或 opencode 环境一律用 node 版；任务书里的心跳命令写 node 版（跨平台）；两套脚本维护同一文件语义（心跳快照、JSONL 账本、锁文件），可混用。
+
 ## 3. 运行监控（两本账）
 
 - 调度账 `docs/process/logs/orchestration.jsonl`：事件 = taskbook_write / lock_acquire / lock_release / spawn_start / spawn_success / spawn_fail / interrupt / gate / state_update / user_decision / agent_stale_warning / agent_stale_critical / agent_budget_exceeded / external_change；用 `scripts/record-event.ps1` 追加。

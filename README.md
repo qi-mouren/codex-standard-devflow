@@ -98,7 +98,8 @@ vibecoding-orchestration/
     ├── check-flow.ps1        # 流程健康检查
     ├── record-event.ps1      # 总控调度事件记录（调度账）
     ├── update-heartbeat.ps1  # 子 agent 心跳（快照 + 执行账）
-    └── analyze-flow.ps1      # 运行复盘：时间线与异常清单
+    ├── analyze-flow.ps1      # 运行复盘：时间线与异常清单
+    └── node/                 # 跨平台 Node 版（macOS/Linux/Windows，CI 三平台冒烟）
 docs/global-agents.md.example # 全局 AGENTS.md 示例
 产品到落地-切分全景图.png      # 流程示意图
 ```
