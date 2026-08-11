@@ -48,3 +48,6 @@
 1. **选种**：优先同品类（desktop_app / web_app / mobile）种子 1-2 份 + 跨产品截图 10-30 张。
 2. **许可红线**：RICO 不可商用；Lazyweb/Refero 数据可用性以账号计划与 MCP 响应为准；WebSight 需人工抽查质量。
 3. **不直接复制**：样本只用于提炼规律；实现必须从原则推导，禁止截图直出代码。
+4. **动效准则接线**：动效评审/设计以 [emilkowalski/skills](https://github.com/emilkowalski/skills)（MIT，emil-design-eng + review-animations）为准绳；代码级检测用本 skill 的 `scripts/check-motion.ps1`。
+5. **动效证据采集**：录屏优先（无头浏览器 + DevTools Protocol / Playwright 录屏，或桌面录屏）；无录屏时至少保留动效清单 + `check-motion.ps1` 输出，并显式标注 motion gate=unverified。
+6. **reduce-motion**：实现必须提供 `prefers-reduced-motion` 降级；评审时对照 W3C 减少动态规范检查。

@@ -68,7 +68,7 @@
 - [ ] 缺陷根因附复现步骤或证据引用（禁止无依据的根因断言）
 - [ ] QA 评审员已读取任务文件并复述任务，经总控确认
 - [ ] 补验场景使用独立 task_name 新建验证 agent（如适用）
-- [ ] UI 相关（启用 ui-design-intelligence 时）：视觉验收通过——对照 design-genome 评审截图，verdict=alive
+- [ ] UI 相关（启用 ui-design-intelligence 时）：视觉验收通过——对照 design-genome 评审截图，verdict=alive；含动效的 UI 还需 motion gate=pass（录屏/帧序列或 check-motion.ps1）
 
 ## 门禁结果记录
 

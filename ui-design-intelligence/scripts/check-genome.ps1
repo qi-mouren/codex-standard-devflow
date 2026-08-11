@@ -8,7 +8,7 @@ $requiredSections = @(
     'Visual Language',
     'Information Philosophy',
     'Spatial Model',
-    'Interaction Philosophy',
+    'Interaction(& Motion)? Philosophy',
     'Component Philosophy',
     'Anti-Patterns'
 )
@@ -24,7 +24,7 @@ $content = Get-Content -Raw -Encoding UTF8 -LiteralPath $GenomePath
 
 $missing = @()
 foreach ($section in $requiredSections) {
-    $pattern = '(?m)^#+\s*' + [regex]::Escape($section)
+    $pattern = '(?m)^#+\s*' + $section
     if ($content -notmatch $pattern) {
         $missing += $section
     }

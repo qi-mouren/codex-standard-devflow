@@ -54,7 +54,7 @@ description: 大型项目标准开发流程：需求蒸馏、产品需求（PRD�
 
 - 详细设计：UI 模块任务书加载项目的 `design-genome.md` + `component-philosophy.md`，LLD 只写原则级设计约束。
 - 开发实现：UI 模块开发员先读 genome 再写代码，产出截图供视觉评审。
-- G5：增加视觉验收 lane，对照 genome 评审，verdict=alive 才算过；评审独立于开发。
+- G5：增加视觉验收 lane，对照 genome 评审，verdict=alive 才算过；含动效的 UI 需 motion gate=pass（录屏/帧序列或 `check-motion.ps1`）；评审独立于开发。
 
 核心流程、门禁、红线不变；该 skill 只提供领域知识与评审回路。
 

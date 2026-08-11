@@ -38,15 +38,25 @@ Avoid:
 - 密度倾向：<compact / comfortable / spacious>
 - 界面应像：<一个操作环境，而不是一个文档页…>
 
-## Interaction Philosophy
+## Interaction & Motion Philosophy
 
 Actions should feel:
 
 - <可预测 / 可逆 / 平静…>
 
-Avoid:
+Motion (什么该动)：
 
-- <闪烁 / 无意义转场…>
+- 进入：<如：菜单 fade+scale，编排顺序…>
+- 退出：<如：快速淡出，不拖沓…>
+- 状态过渡：<如：选中/悬停/展开/错误…>
+- 流式/加载：<如：文本流式呈现、骨架屏…>
+- 减少动态：<如：prefers-reduced-motion 下全部收敛为瞬时…>
+
+Avoid (什么不能动)：
+
+- <闪烁 / 无意义转场 / 无限装饰动画 / 进入用 ease-in…>
+
+> 动效证据要求：以上内容若来自静态截图，标注 `motion: unobserved`，待录屏/帧序列确认。
 
 ## Component Philosophy
 

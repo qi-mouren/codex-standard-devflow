@@ -26,6 +26,7 @@ standard-devflow 的**领域挂载 skill**（与 analyze-idea、pil-diagram 同�
 2. **多模态模型 = 设计师与审稿人，文本 LLM = 工程师。** 多模态提炼审美规律，文本 Agent 负责实现。
 3. **评审必须对照 genome，先给原则级意见，再谈具体修改。** 评审者不得评审自己的产出。
 4. **样本要跨产品、有数量。** 不复制单一产品；提炼共同规律。
+5. **静态验证形，动效验证势。** 截图只能证明"长什么样"；"怎么动"必须用录屏/帧序列或代码级检测证明。verdict=alive 必须动效 gate 通过。
 
 ## 产物
 
@@ -34,7 +35,7 @@ standard-devflow 的**领域挂载 skill**（与 analyze-idea、pil-diagram 同�
 | design-genome.md | 原则层：Personality / Visual Language / Information Philosophy / Spatial Model / Interaction Philosophy / Anti-Patterns | 项目 `.agent/knowledge/` |
 | design-dna.json | token 层：色板/字体/间距/圆角/动效等具体值（实现约束） | 同上 |
 | component-philosophy.md | 核心组件的 Purpose / Visual Role / Behavior / Variants | 同上 |
-| verdict.json | 评审结论：alive / templated / flat + 违反条目 + 2-3 个修正方向 | 同上 |
+| verdict.json | 评审结论：alive / templated / flat + 违反条目 + 2-3 个修正方向 + **motion gate**（unverified / pass / fail） | 同上 |
 
 ## 工作流
 
@@ -51,6 +52,8 @@ U0 选种子 → U1 提炼 Genome → U2 组件哲学 → U3 注入代码 Agent 
 ### U1 提炼 Design Genome
 
 - 有视觉模型：按 `references/analysis-prompt.md` 让多模态模型逐张分析样本，收敛为原则 → 产出 `design-genome.md` + `design-dna.json`（字段见 `references/genome-schema.md`）。
+- 样本含录屏/帧序列时，**必须**追加动效分析通道（`references/analysis-prompt.md` 第三遍提示词），把进入/退出/状态过渡/流式节奏收进 genome 的 Interaction & Motion Philosophy 与 token 层 motion 阶段表。
+- 样本只有静态截图时，genome 的动效章节标注 `motion: unobserved`，禁止凭静态截图推断动效。
 - 无视觉模型（显式降级）：以种子 DESIGN.md + taste-skill/前端准则为底稿起草 genome，**必须标注"未经过截图分析"**，交人类确认。
 - 完成标准：genome 六个章节齐全、每条原则可判定、Anti-Patterns 非空；`scripts/check-genome.ps1` 通过。
 
@@ -63,13 +66,17 @@ U0 选种子 → U1 提炼 Genome → U2 组件哲学 → U3 注入代码 Agent 
 
 - 任务书/系统提示必须包含："实现前先读 design-genome.md + component-philosophy.md；从原则推导 UI 决策，禁止盲抄固定值。"
 - 实现层准则：shadcn/ui + Tailwind 用 `ui-styling` skill；设计系统 token 用 `design-system`；知识检索用 `ui-ux-pro-max`。
+- 动效实现规则：用声明式 CSS（transition/animation）；只动 transform/opacity；时长取 token 层 motion 阶段表；进入用 ease-out；必须提供 `prefers-reduced-motion` 降级；禁止无限装饰动画。
 - UI 完成后产出截图（桌面/移动至少各一张）到 `.agent/knowledge/screenshots/`。
+- UI 含动效时，**尽量**产出录屏或关键帧序列到 `.agent/knowledge/motion/`，并写一份动效清单（每个动效：触发、阶段、时长、缓动、是否 reduce-motion 降级）。无法录屏时必须运行 `scripts/check-motion.ps1` 做代码级检测。
 
 ### U4 视觉评审闭环
 
-- 评审输入：截图 + genome + 实现代码。
-- 评审顺序：先原则级对照（`references/reviewer-prompt.md`）→ 本地确定性审查（impeccable `audit`/`critique`，如有）→ 可选多模态外部评审（grok-designer 式 CLI：截图 → 视觉模型 → 意见回填）。
-- 输出 `verdict.json`：alive（通过）/ templated（正确但平庸，违反 genome）/ flat（无层级无身份）。
+- 评审输入：截图 + genome + 实现代码 + **动效证据**（录屏/帧序列/动效清单/check-motion 输出）。
+- 评审分两条 lane：
+  - **静态 lane**：截图 → 原则级对照（`references/reviewer-prompt.md`）→ 本地确定性审查（impeccable `audit`/`critique`，如有）→ 可选多模态外部评审。
+  - **动效 lane**：代码级 `scripts/check-motion.ps1`（必跑，确定性）→ 有录屏/帧序列时用多模态模型评审动效（进入/退出/状态过渡/流式/反馈/减少动态）→ 汇总到 verdict 的 motion gate。
+- 输出 `verdict.json`：alive（通过，含 motion gate=pass）/ templated（正确但平庸，违反 genome）/ flat（无层级无动效无身份）。
 - 非 alive：给 2-3 个原则级修正方向 → 回 U3 修改 → 重新评审，闭环直至 alive 或人类显式接受降级。
 
 ### U5 G5 验收挂载
@@ -95,6 +102,7 @@ U0 选种子 → U1 提炼 Genome → U2 组件哲学 → U3 注入代码 Agent 
 ## 脚本
 
 - `scripts/check-genome.ps1`：校验 design-genome.md 章节完整性与禁用项（px/hex 泄漏警告）。
+- `scripts/check-motion.ps1`：代码级动效检测——只动 transform/opacity、时长范围、进入 ease-out、reduce-motion 存在性、无限动画警告。
 
 ## 红线规则
 
@@ -104,7 +112,8 @@ U0 选种子 → U1 提炼 Genome → U2 组件哲学 → U3 注入代码 Agent 
 4. 评审先讲原则违反，再谈修改；禁止第一步就抛像素级修改。
 5. 评审者不得评审自己产出（含代码 Agent 自评）。
 6. 样本必须跨产品，禁止单产品复制式提炼。
-7. 本 skill 只做 UI 设计智能；流程门禁、任务书、状态管理一律走 standard-devflow。
+7. **静态评审不能证明动效通过。** 无动效证据（录屏/帧序列/check-motion 输出）时，motion gate=unverified，verdict 不得为 alive。
+8. 本 skill 只做 UI 设计智能；流程门禁、任务书、状态管理一律走 standard-devflow。
 
 ## 来源与署名
 

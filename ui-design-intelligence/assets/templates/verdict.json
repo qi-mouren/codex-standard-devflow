@@ -11,6 +11,12 @@
   ],
   "moves": ["<2-3 个原则级修正方向>"],
   "screenshots": { "desktop": "", "mobile": "" },
+  "motion": {
+    "gate": "unverified",
+    "basis": "none",
+    "evidence": "",
+    "findings": []
+  },
   "reviewer": "<评审角色>",
   "accepted_by": null,
   "timestamp": "<ISO8601>"
