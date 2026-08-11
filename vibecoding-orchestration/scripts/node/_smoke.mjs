@@ -140,6 +140,44 @@ if (!cliHb2.includes('"note": "显式 note flag"')) {
 passed++;
 console.log("[PASS] 适配器心跳 --note flag 生效");
 
+// classify-change：小改动 → Quick；碰契约 → Standard；新锚点 → Enterprise
+const qOut = run("classify-change.mjs", ["--project-path", root, "--files", "src/user/api.py"]);
+if (!qOut.includes("建议模式: Quick")) {
+  console.error("[FAIL] classify-change 未判 Quick");
+  process.exit(1);
+}
+passed++;
+console.log("[PASS] classify-change 小改动判 Quick");
+
+const sOut = run("classify-change.mjs", ["--project-path", root, "--files", "src/order/api.py contracts/contracts-registry.md"]);
+if (!sOut.includes("建议模式: Standard")) {
+  console.error("[FAIL] classify-change 未判 Standard");
+  process.exit(1);
+}
+passed++;
+console.log("[PASS] classify-change 碰契约判 Standard");
+
+const eOut = run("classify-change.mjs", ["--project-path", root, "--files", "docs/00-requirements/requirements-anchor-epic99.md"]);
+if (!eOut.includes("建议模式: Enterprise")) {
+  console.error("[FAIL] classify-change 未判 Enterprise");
+  process.exit(1);
+}
+passed++;
+console.log("[PASS] classify-change 新锚点判 Enterprise");
+
+// generate-taskbooks：scope → design/build 任务书骨架
+mkdirSync(join(root, "docs/03-scope"), { recursive: true });
+writeFileSync(
+  join(root, "docs/03-scope/scope.md"),
+  "# 模块拆解清单\n\n| 模块 ID | 名称 | 职责 |\n|---|---|---|\n| MOD-01 | 用户模块 | ... |\n| MOD-02 | 订单模块 | ... |\n",
+  "utf8"
+);
+run("generate-taskbooks.mjs", ["--project-path", root, "--phase", "design"]);
+expectFile(join(root, "docs/process/tasks/mod01_design.md"));
+expectFile(join(root, "docs/process/tasks/mod02_design.md"));
+run("generate-taskbooks.mjs", ["--project-path", root, "--phase", "build"]);
+expectFile(join(root, "docs/process/tasks/mod01_build.md"));
+
 rmSync(root, { recursive: true, force: true });
 console.log(`\n全部通过：${passed} 项检查`);
 process.exit(0);
