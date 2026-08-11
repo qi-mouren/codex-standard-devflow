@@ -5,7 +5,7 @@
 // 输出: 概览统计、调度时间线、每轮明细、异常清单
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
-import { parseArgs } from "./_util.mjs";
+import { parseArgs, stripBom } from "./_util.mjs";
 
 const args = parseArgs(process.argv.slice(2), [
   { name: "projectPath", type: "string" },
@@ -36,7 +36,7 @@ function parseLines(file) {
   const out = [];
   if (!existsSync(file)) return out;
   for (const raw of readFileSync(file, "utf8").split(/\r?\n/)) {
-    const line = raw.trim();
+    const line = stripBom(raw).trim();
     if (!line) continue;
     try {
       out.push(JSON.parse(line));

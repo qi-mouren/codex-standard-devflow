@@ -5,7 +5,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseArgs, walkFiles } from "./_util.mjs";
+import { parseArgs, stripBom, walkFiles } from "./_util.mjs";
 
 const args = parseArgs(process.argv.slice(2), [
   { name: "projectPath", type: "string" },
@@ -60,7 +60,7 @@ else issue(`traceability.md 缺失: ${traceFile}`);
 // 3. 门禁产物（按 STATE 中阶段动态判断前序产物）
 let stage = "UNKNOWN";
 if (existsSync(stateFile)) {
-  const line = readFileSync(stateFile, "utf8").split(/\r?\n/).find((l) => /^-\s*阶段：/.test(l));
+  const line = stripBom(readFileSync(stateFile, "utf8")).split(/\r?\n/).find((l) => /^-\s*阶段：/.test(l));
   if (line) stage = line.replace(/^-\s*阶段：/, "").trim();
 }
 console.log(`\n当前阶段: ${stage}`);
@@ -93,7 +93,7 @@ if (requiredByStage[stage]) {
 // 4. 契约注册表基本校验
 const regFile = join(contractsDir, "contracts-registry.md");
 if (existsSync(regFile)) {
-  if (readFileSync(regFile, "utf8").includes("冻结版本")) ok("契约注册表含冻结版本标记");
+  if (stripBom(readFileSync(regFile, "utf8")).includes("冻结版本")) ok("契约注册表含冻结版本标记");
   else issue("契约注册表缺冻结版本标记");
 }
 
@@ -116,7 +116,7 @@ const tasksDir = join(procDir, "tasks");
 const hbFile = join(tasksDir, ".heartbeat");
 if (existsSync(hbFile)) {
   try {
-    const hb = JSON.parse(readFileSync(hbFile, "utf8"));
+    const hb = JSON.parse(stripBom(readFileSync(hbFile, "utf8")));
     const ageMin = (Date.now() - Date.parse(hb.timestamp)) / 60000;
     const isLong = (hb.note ?? "").toLowerCase().startsWith("long:");
     const limit = isLong ? longMin : killMin;
@@ -137,7 +137,7 @@ if (existsSync(hbFile)) {
 
 // 7. 追踪矩阵完整性
 if (existsSync(traceFile)) {
-  if (/\| REQ-\d+/.test(readFileSync(traceFile, "utf8"))) ok("追踪矩阵含 REQ 条目");
+  if (/\| REQ-\d+/.test(stripBom(readFileSync(traceFile, "utf8")))) ok("追踪矩阵含 REQ 条目");
   else issue("追踪矩阵无 REQ 条目");
 }
 

@@ -21,14 +21,14 @@ permission:
 ## 输入（只读）
 
 - LLD：`docs/04-lld/<module>.md`
-- 契约注册表：`docs/process/contracts-registry.md`（冻结，只读）
+- 契约注册表：`contracts/contracts-registry.md`（冻结，只读）
 - 任务书 Scope Lock 与关键接口速查
 
 ## 执行规则
 
 - 只改任务书 Scope Lock 允许的路径（通常 `src/<module>` 与 `tests/test_<module>`）；禁止改其他模块、禁止改已冻结契约。
 - 发现接口与契约冲突：停止并上报，禁止自行改契约。
-- 每个工具步骤后或最多每 60 秒执行心跳：`node docs/process/.opencode-heartbeat.mjs "<当前动作>"`；预计超过 60 秒的命令（如全量测试）用 `LONG: <动作>` 前缀。
+- 心跳以任务书命令为准；默认 `node docs/process/.opencode-heartbeat.mjs "<当前动作>"`，并行轮任务书会给 `--task-name/--heartbeat-file/--log-file` 覆盖参数（每 agent 独立心跳文件，禁止共用）；预计超过 60 秒的命令（如全量测试）用 `LONG: <动作>` 前缀。
 - 禁止 spawn 子 agent、禁止按总控角色行动、禁止自评。
 
 ## 产出与完成

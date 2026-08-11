@@ -8,10 +8,14 @@
 import { readFileSync, writeFileSync, appendFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
+function stripBom(s) {
+  return s && s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
+}
+
 function loadConfig(directory) {
   const p = resolve(directory, "docs/process/.devflow-heartbeat.json");
   try {
-    return JSON.parse(readFileSync(p, "utf8"));
+    return JSON.parse(stripBom(readFileSync(p, "utf8")));
   } catch {
     return null;
   }
