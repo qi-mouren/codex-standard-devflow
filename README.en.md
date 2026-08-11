@@ -30,7 +30,11 @@ The flow **auto-escalates or auto-degrades** as the change grows or shrinks — 
 
 ## Three Modes
 
-![Three Modes Overview](product-to-delivery-three-scenarios-en.png)
+![Quick Mode](flow-quick-en.png)
+
+![Standard Mode](flow-standard-en.png)
+
+![Enterprise Mode](flow-enterprise-en.png)
 
 | Mode | When | Pipeline |
 |---|---|---|
@@ -110,10 +114,11 @@ vibecoding-orchestration/      # skill source (core flow + adaptation layer)
 └── scripts/
     ├── *.ps1                  # Windows Codex scripts (PowerShell)
     └── node/                  # cross-platform Node port (macOS/Linux/Windows)
-tools/draw-flow-panorama.py    # panorama generator (zh/en)
+tools/draw-flow-panorama.py    # mode panorama generator (three modes × zh/en)
 docs/global-agents.md.example  # global AGENTS.md example
-产品到落地-三场景全景图.png      # flow overview (Chinese)
-product-to-delivery-three-scenarios-en.png # flow overview (English)
+flow-quick-zh.png / flow-quick-en.png           # Quick Mode diagrams (zh/en)
+flow-standard-zh.png / flow-standard-en.png     # Standard Mode diagrams (zh/en)
+flow-enterprise-zh.png / flow-enterprise-en.png # Enterprise Mode diagrams (zh/en)
 ```
 
 ## License

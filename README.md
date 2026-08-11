@@ -30,7 +30,11 @@
 
 ## 三种模式
 
-![三场景全景图](产品到落地-三场景全景图.png)
+![快速模式](flow-quick-zh.png)
+
+![标准模式](flow-standard-zh.png)
+
+![大型模式](flow-enterprise-zh.png)
 
 | 模式 | 适用 | 流程 |
 |---|---|---|
@@ -110,10 +114,11 @@ vibecoding-orchestration/      # skill 源（核心流程 + 适配层）
 └── scripts/
     ├── *.ps1                  # Windows Codex 脚本（PS 版）
     └── node/                  # 跨平台 Node 版（macOS/Linux/Windows）
-tools/draw-flow-panorama.py    # 全景图生成器（zh/en）
+tools/draw-flow-panorama.py    # 模式全景图生成器（三模式 × zh/en）
 docs/global-agents.md.example  # 全局 AGENTS.md 示例
-产品到落地-三场景全景图.png      # 流程示意图（中文）
-product-to-delivery-three-scenarios-en.png # 流程示意图（English）
+flow-quick-zh.png / flow-quick-en.png           # 快速模式示意图（中/英）
+flow-standard-zh.png / flow-standard-en.png     # 标准模式示意图（中/英）
+flow-enterprise-zh.png / flow-enterprise-en.png # 大型模式示意图（中/英）
 ```
 
 ## 许可

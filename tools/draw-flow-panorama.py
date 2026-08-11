@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Vibecoding Orchestration 三场景全景图生成器（zh / en 双版）
+"""Vibecoding Orchestration 模式全景图生成器（zh / en 双版，每档模式一张图）
 运行: python tools/draw-flow-panorama.py
-输出: 产品到落地-三场景全景图.png / product-to-delivery-three-scenarios-en.png
-风格: pil-diagram skill（浅色背景、微软雅黑、圆角卡片、语义色板、2x 导出）
+输出:
+  flow-quick-zh.png / flow-quick-en.png
+  flow-standard-zh.png / flow-standard-en.png
+  flow-enterprise-zh.png / flow-enterprise-en.png
+风格: 对齐「产品到落地-切分全景图」（pil-diagram skill：浅底、微软雅黑、
+      圆角卡片、语义色板、叙事分节、底部白卡、2x 导出）
 """
 from PIL import Image, ImageDraw, ImageFont
 import math
 
 S = 2
-W, H = 1560 * S, 1320 * S
 FONT_REG = r"C:\Windows\Fonts\msyh.ttc"
 FONT_BOLD = r"C:\Windows\Fonts\msyhbd.ttc"
-
 _cache = {}
 
 
@@ -54,14 +56,54 @@ CARD_LN = (215, 222, 232)
 WHITE = (255, 255, 255)
 
 
-T = {
+class Cv:
+    def __init__(self, w, h):
+        self.img = Image.new("RGB", (w * S, h * S), (250, 251, 253))
+        self.d = ImageDraw.Draw(self.img)
+
+    def rect(self, x, y, w, h, fill=None, outline=None, width=2, r=12):
+        self.d.rounded_rectangle([x * S, y * S, (x + w) * S, (y + h) * S], radius=r * S,
+                                 fill=fill, outline=outline, width=max(1, round(width * S)))
+
+    def text(self, x, y, s, font, fill=INK, anchor="mm"):
+        self.d.text((x * S, y * S), s, font=font, fill=fill, anchor=anchor)
+
+    def text_w(self, s, size, bold):
+        f = fb(size) if bold else fr(size)
+        bb = self.d.textbbox((0, 0), s, font=f)
+        return (bb[2] - bb[0]) / S
+
+    def auto_text(self, x, y, s, size, bold, max_w, fill=INK, anchor="mm", min_size=8.5):
+        sz = size
+        while sz > min_size and self.text_w(s, sz, bold) > max_w:
+            sz -= 0.5
+        if sz < size - 1.0:
+            print(f"  [shrink] {s[:40]!r}: {size} -> {sz}px (max_w={max_w})")
+        self.text(x, y, s, fb(sz) if bold else fr(sz), fill, anchor)
+
+    def line(self, x1, y1, x2, y2, color=GRAY, width=1.5):
+        self.d.line([x1 * S, y1 * S, x2 * S, y2 * S], fill=color, width=max(1, round(width * S)))
+
+    def arrow(self, x1, y1, x2, y2, color=GRAY, width=1.5):
+        self.line(x1, y1, x2, y2, color, width)
+        ang = math.atan2(y2 - y1, x2 - x1)
+        L = 9 * S
+        a1, a2 = ang + math.radians(150), ang - math.radians(150)
+        p1 = (x2 * S + L * math.cos(a1), y2 * S + L * math.sin(a1))
+        p2 = (x2 * S + L * math.cos(a2), y2 * S + L * math.sin(a2))
+        self.d.polygon([(x2 * S, y2 * S), p1, p2], fill=color)
+
+    def save(self, out):
+        self.img.save(out)
+        print("saved:", out, self.img.size)
+
+
+TQ = {
     "zh": {
-        "title": "Vibecoding Orchestration · 三场景全景图",
-        "subtitle": "同一套门禁与契约底线，按改动规模自动选择流程深度：快速 → 标准 → 大型",
-        "legend": [("需求/门禁", RED), ("设计", BLUE), ("实现/集成", GREEN), ("快速", ORANGE), ("大型/并行", PURPLE)],
-        "l1_label": "快速模式",
-        "l1_desc": ["小改动 · 修 bug / 小接口 / 小重构", "不跨模块 · 不碰契约 · 通常 <200 行"],
-        "l1": [
+        "title": "快速模式 · 小改动直通交付",
+        "subtitle": "修 bug / 小接口 / 小重构（<200 行、不跨模块、不碰契约）：需求一句话 → 任务书 → 实现 → 独立评审 → 提交",
+        "step1": "第一步 · 流程：六步轻量闭环",
+        "cards": [
             ("一句话需求", "验收口径直接写", ORANGE, ORANGE_F),
             ("任务书", "Scope Lock + 心跳", ORANGE, ORANGE_F),
             ("实现", "总控或执行 agent", GREEN, GREEN_F),
@@ -69,10 +111,85 @@ T = {
             ("G-quick PASS", "提交 + STATE 一行", RED, RED_F),
             ("提交", "改动即交付", GREEN, GREEN_F2),
         ],
-        "l1_note": "不产出 PRD / HLD / LLD；触碰契约或跨模块 → 自动升级标准模式",
-        "l2_label": "标准模式",
-        "l2_desc": ["中型功能 · 完整门禁 + 契约", "适合绝大多数功能开发"],
-        "l2_stages": [
+        "note1": "不产出 PRD / HLD / LLD；触碰契约或跨模块 → 自动升级标准模式",
+        "step2": "第二步 · 产出边界：什么留、什么不留",
+        "left_title": "快速模式只产出",
+        "left": ["任务书（含 Scope Lock + 心跳命令）", "代码变更 + 提交", "评审记录 + STATE 变更一行"],
+        "right_title": "快速模式不产出",
+        "right": ["PRD / HLD / LLD", "契约变更（碰契约即不属于快速）", "门禁产物与追踪矩阵增量"],
+        "step3": "第三步 · 不豁免项（小改动也是可追溯的）",
+        "bottom": ["心跳 + watchdog + 账本记录照常", "独立评审不可免：产出的节点不能当自己的裁判"],
+    },
+    "en": {
+        "title": "Quick Mode · Small Changes, Straight to Delivery",
+        "subtitle": "bugfix / small API / refactor (<200 LOC, no cross-module, no contract touch): one-line requirement → task book → implement → independent review → commit",
+        "step1": "Step 1 · Pipeline: six-step lightweight loop",
+        "cards": [
+            ("One-line requirement", "acceptance criteria inline", ORANGE, ORANGE_F),
+            ("Task book", "Scope Lock + heartbeat", ORANGE, ORANGE_F),
+            ("Implement", "controller or executor agent", GREEN, GREEN_F),
+            ("Independent review", "review is mandatory", BLUE, BLUE_F),
+            ("G-quick PASS", "commit + STATE line", RED, RED_F),
+            ("Ship", "change delivered", GREEN, GREEN_F2),
+        ],
+        "note1": "No PRD / HLD / LLD; touching contracts or crossing modules auto-upgrades to Standard",
+        "step2": "Step 2 · Output boundary: what stays, what doesn't",
+        "left_title": "Quick Mode produces",
+        "left": ["Task book (Scope Lock + heartbeat command)", "Code changes + commit", "Review record + one STATE line"],
+        "right_title": "Quick Mode does NOT produce",
+        "right": ["PRD / HLD / LLD", "Contract changes (contracts are out of Quick scope)", "Gate artifacts and traceability increments"],
+        "step3": "Step 3 · Never waived (small changes stay traceable)",
+        "bottom": ["Heartbeat + watchdog + ledgers as usual", "Independent review is mandatory: producers never judge their own output"],
+    },
+}
+
+
+def draw_quick(lang, out):
+    t = TQ[lang]
+    cv = Cv(1560, 1000)
+    cv.text(780, 46, t["title"], fb(26), INK)
+    cv.text(780, 74, t["subtitle"], fr(14), SUB)
+
+    cv.text(90, 112, t["step1"], fb(16), INK, anchor="lm")
+    xs = [145, 365, 585, 805, 1025, 1245]
+    ws = [190, 190, 190, 190, 190, 190]
+    for (title, sub, bcol, fcol), x, w in zip(t["cards"], xs, ws):
+        cv.rect(x, 138, w, 84, fill=fcol, outline=bcol, width=2, r=10)
+        cv.auto_text(x + w / 2, 162, title, 14.5, True, w - 24)
+        cv.auto_text(x + w / 2, 188, sub, 11.5, False, w - 24, SUB)
+    for i in range(len(xs) - 1):
+        cv.arrow(xs[i] + ws[i] - 3, 180, xs[i + 1] + 3, 180)
+    cv.text(780, 252, t["note1"], fr(12.5), GRAY)
+
+    cv.text(90, 300, t["step2"], fb(16), INK, anchor="lm")
+    cv.rect(110, 330, 630, 156, fill=GREEN_F, outline=GREEN, width=2, r=12)
+    cv.text(130, 358, t["left_title"], fb(15), INK, anchor="lm")
+    ly = 388
+    for ln in t["left"]:
+        cv.auto_text(130, ly, ln, 12.5, False, 590, (68, 84, 106), anchor="lm")
+        ly += 28
+    cv.rect(830, 330, 630, 156, fill=RED_F, outline=RED, width=2, r=12)
+    cv.text(850, 358, t["right_title"], fb(15), INK, anchor="lm")
+    ly = 388
+    for ln in t["right"]:
+        cv.auto_text(850, ly, ln, 12.5, False, 590, (68, 84, 106), anchor="lm")
+        ly += 28
+
+    cv.text(90, 540, t["step3"], fb(16), INK, anchor="lm")
+    cv.rect(110, 570, 1340, 128, fill=WHITE, outline=CARD_LN, width=1.5, r=12)
+    ly = 606
+    for ln in t["bottom"]:
+        cv.auto_text(130, ly, ln, 13, False, 1280, (68, 84, 106), anchor="lm")
+        ly += 30
+    cv.save(out)
+
+
+TS = {
+    "zh": {
+        "title": "标准模式 · 中型功能完整门禁",
+        "subtitle": "A0 需求锚定 → PRD → HLD → 模块拆解 → LLD → 契约冻结 G4 → 开发实现 → 集成交付；门禁 G0-G5 逐关把关",
+        "step1": "第一步 · 流程：八步 + 六门禁（评审通过才继续）",
+        "stages": [
             ("A0 需求锚定", "REQ 可测无废案", RED, RED_F),
             ("PRD", "覆盖全部 REQ", BLUE, BLUE_F),
             ("HLD", "方案 + 风险", BLUE, BLUE_F),
@@ -82,62 +199,24 @@ T = {
             ("开发实现", "单测 + 契约测试", GREEN, GREEN_F),
             ("集成交付", "全量回归 + 发布", DGREEN, None),
         ],
-        "gates": ["G0", "G1", "G2", "G3", "G5"],
-        "l2_note": "门禁 G0–G5：评审通过才继续；G4 冻结后变更走版本升级，任何 agent 不得自评",
-        "l3_label": "大型模式",
-        "l3_desc": ["新系统 / 大史诗 · 史诗切分 + 模块并行 + 里程碑", "适合大型项目和长期迭代"],
-        "l3a": [
-            ("产品", "整个系统", PRODUCT, None),
-            ("史诗切分", "EPIC-01 · 02 · 03 · 04 · 05", PURPLE, PURPLE_F),
-            ("每个史诗独立跑标准流程", "只通过契约注册表衔接", BLUE, BLUE_F),
+        "gates": {0: "G0", 1: "G1", 2: "G2", 3: "G3", 6: "G5"},
+        "note1": "门禁 G0-G5：评审通过才继续；G4 冻结后变更走版本升级；任何 agent 不得自评",
+        "step2": "第二步 · 每步的三件事与门禁 owner",
+        "cards": [
+            ("产物落盘", ["每步完成时三件事同时发生", "产物 + Git tag + STATE 更新"], GREEN, GREEN_F),
+            ("门禁 owner 明确", ["G0/G1 人类 · G2 人类+架构评审", "G3/G4 总控 · G5 独立 QA"], BLUE, BLUE_F),
+            ("文档治理", ["INDEX 地图 + 门禁摘要收敛", "检索优先：会话只吃一小片"], ORANGE, ORANGE_F),
         ],
-        "l3b": [
-            ("模块并行", "B-4/B-5 每批 2–3 个", VIOLET, VIOLET_F),
-            ("契约注册表", "跨史诗唯一衔接", BLUE, BLUE_F),
-            ("里程碑 M1→M3", "可发布增量 · 人拍板", ORANGE, ORANGE_F),
-            ("交付", "产品完整可用", DGREEN, None),
-        ],
-        "l3_note": "史诗之间不共享上下文；并行 agent 独立任务书 + 独立心跳文件，禁止递归 spawn",
-        "l4_label": "跨平台",
-        "l4_desc": ["同一套流程，任意 agent 平台", "核心与适配分层，平台差异只在适配层"],
-        "l4": [
-            ("Codex", "官方原生 · Windows/macOS", BLUE, BLUE_F),
-            ("opencode", "官方样板 · 角色卡 + Node 脚本", GREEN, GREEN_F),
-            ("其他平台", "社区模板 + 六能力验收", ORANGE, ORANGE_F),
-        ],
-        "bottom_left_title": "三档通用底线",
-        "bottom_left": [
-            "需求先蒸馏：噪声留在锚点之前",
-            "产出的节点不能当自己的裁判：独立评审",
-            "契约冻结后变更走版本升级",
-            "文件即真相：交接 = 路径 + 一页摘要",
-        ],
-        "bottom_right_title": "自动升降级",
-        "bottom_right": [
-            "快速 → 标准：触碰契约 / 跨模块 / 涉架构",
-            "标准 → 大型：单史诗 >8 模块 / 需并行与里程碑",
-            "大型 → 快速：单点小改动",
-            "任何模式：心跳 + 账本可复盘",
-        ],
+        "step3": "第三步 · 边界",
+        "bottom": ["单史诗 3–8 个模块，超过 8 必须再切一刀", "每个里程碑/史诗独立跑完整流程，产品层不重复"],
+        "step4": "第四步 · 执行纪律（进入子 agent 阶段必守）",
+        "discipline": ["任务书自包含 + current.md 兜底；心跳 60s / watchdog 3-8-15 判卡死", "子 agent 禁止递归；spawn 失败重试 ≤2 次后上报，禁止主会话代做"],
     },
     "en": {
-        "title": "Vibecoding Orchestration · Three Modes Overview",
-        "subtitle": "One set of gates and contract discipline; depth auto-selects by change size: Quick → Standard → Enterprise",
-        "legend": [("Gates", RED), ("Design", BLUE), ("Build/Integrate", GREEN), ("Quick", ORANGE), ("Enterprise/Parallel", PURPLE)],
-        "l1_label": "Quick Mode",
-        "l1_desc": ["Small changes · bugfix / small API / refactor", "no cross-module · no contract touch · usually <200 LOC"],
-        "l1": [
-            ("One-line requirement", "acceptance criteria inline", ORANGE, ORANGE_F),
-            ("Task book", "Scope Lock + heartbeat", ORANGE, ORANGE_F),
-            ("Implement", "controller or executor agent", GREEN, GREEN_F),
-            ("Independent review", "review is mandatory", BLUE, BLUE_F),
-            ("G-quick PASS", "commit + STATE line", RED, RED_F),
-            ("Ship", "change delivered", GREEN, GREEN_F2),
-        ],
-        "l1_note": "No PRD / HLD / LLD; touching contracts or crossing modules auto-upgrades to Standard",
-        "l2_label": "Standard Mode",
-        "l2_desc": ["Medium features · full gates + contracts", "covers most feature work"],
-        "l2_stages": [
+        "title": "Standard Mode · Full Gates for Medium Features",
+        "subtitle": "A0 Anchor → PRD → HLD → Module Split → LLD → Contract Freeze G4 → Build → Integrate; gates G0-G5 check every step",
+        "step1": "Step 1 · Pipeline: eight steps + six gates (proceed only after review)",
+        "stages": [
             ("A0 Anchor", "testable REQs", RED, RED_F),
             ("PRD", "covers all REQs", BLUE, BLUE_F),
             ("HLD", "design + risks", BLUE, BLUE_F),
@@ -147,198 +226,298 @@ T = {
             ("Build", "unit + contract tests", GREEN, GREEN_F),
             ("Integrate", "full regression + release", DGREEN, None),
         ],
-        "gates": ["G0", "G1", "G2", "G3", "G5"],
-        "l2_note": "Gates G0-G5: proceed only after review; after G4 freeze, changes go through version upgrade; no agent reviews itself",
-        "l3_label": "Enterprise Mode",
-        "l3_desc": ["New system / big epic · epic split + module parallelism + milestones", "for large projects and long-term iteration"],
-        "l3a": [
-            ("Product", "whole system", PRODUCT, None),
-            ("Epic split", "EPIC-01 · 02 · 03 · 04 · 05", PURPLE, PURPLE_F),
-            ("Standard flow per epic", "linked via contract registry", BLUE, BLUE_F),
+        "gates": {0: "G0", 1: "G1", 2: "G2", 3: "G3", 6: "G5"},
+        "note1": "Gates G0-G5: proceed only after review; after G4 freeze, changes ship as version upgrades; no agent reviews itself",
+        "step2": "Step 2 · Three things per step + gate owners",
+        "cards": [
+            ("Artifacts land", ["all three happen at once per step", "artifact + Git tag + STATE update"], GREEN, GREEN_F),
+            ("Gate owners", ["G0/G1 human · G2 human + architect", "G3/G4 controller · G5 independent QA"], BLUE, BLUE_F),
+            ("Doc governance", ["INDEX map + gate summary convergence", "search-first: sessions load a slice"], ORANGE, ORANGE_F),
         ],
-        "l3b": [
-            ("Parallel modules", "B-4/B-5 batches of 2-3", VIOLET, VIOLET_F),
-            ("Contract registry", "single cross-epic link", BLUE, BLUE_F),
-            ("Milestones M1-M3", "shippable increments", ORANGE, ORANGE_F),
-            ("Deliver", "product fully usable", DGREEN, None),
+        "step3": "Step 3 · Boundaries",
+        "bottom": ["3-8 modules per epic; split again beyond 8", "every milestone/epic runs the full flow; the product layer never repeats it"],
+        "step4": "Step 4 · Discipline (mandatory once sub-agents start)",
+        "discipline": ["Self-contained task books + current.md fallback; heartbeat 60s / watchdog 3-8-15 stale detection", "Sub-agents must not spawn; after ≤2 failed retries, report to the human instead of doing the work in the main session"],
+    },
+}
+
+
+def draw_standard(lang, out):
+    t = TS[lang]
+    cv = Cv(1560, 1180)
+    cv.text(780, 46, t["title"], fb(26), INK)
+    cv.text(780, 74, t["subtitle"], fr(14), SUB)
+
+    cv.text(90, 112, t["step1"], fb(16), INK, anchor="lm")
+    x0, cw, gap = 110, 150, 26
+    ys = 138
+    for i, (title, sub, bcol, fcol) in enumerate(t["stages"]):
+        x = x0 + i * (cw + gap)
+        if fcol is None:
+            cv.rect(x, ys, cw, 86, fill=bcol, width=0, r=10)
+            cv.auto_text(x + cw / 2, ys + 30, title, 13.5, True, cw - 14, WHITE)
+            cv.auto_text(x + cw / 2, ys + 56, sub, 11, False, cw - 14, DGREEN_T)
+        else:
+            cv.rect(x, ys, cw, 86, fill=fcol, outline=bcol, width=2, r=10)
+            cv.auto_text(x + cw / 2, ys + 30, title, 13.5, True, cw - 14)
+            cv.auto_text(x + cw / 2, ys + 56, sub, 11, False, cw - 14, SUB)
+    for gi, label in t["gates"].items():
+        chip_x = x0 + (gi + 1) * (cw + gap) - gap + 1
+        cv.rect(chip_x, ys + 34, 24, 20, fill=RED_F, outline=RED, width=1.5, r=6)
+        cv.auto_text(chip_x + 12, ys + 44, label, 10, True, 20, RED)
+        cv.arrow(x0 + gi * (cw + gap) + cw - 2, ys + 44, chip_x, ys + 44)
+        cv.arrow(chip_x + 24, ys + 44, x0 + (gi + 1) * (cw + gap) + 2, ys + 44)
+    cv.text(780, 262, t["note1"], fr(12.5), GRAY)
+
+    cv.text(90, 316, t["step2"], fb(16), INK, anchor="lm")
+    xs = [110, 580, 1050]
+    ws = [440, 440, 440]
+    for (title, lines, bcol, fcol), x, w in zip(t["cards"], xs, ws):
+        cv.rect(x, 346, w, 122, fill=fcol, outline=bcol, width=2, r=12)
+        cv.text(x + 20, 372, title, fb(15), INK, anchor="lm")
+        ly = 404
+        for ln in lines:
+            cv.auto_text(x + 20, ly, ln, 12.5, False, w - 40, (68, 84, 106), anchor="lm")
+            ly += 28
+
+    cv.text(90, 530, t["step3"], fb(16), INK, anchor="lm")
+    cv.rect(110, 560, 1340, 116, fill=WHITE, outline=CARD_LN, width=1.5, r=12)
+    ly = 594
+    for ln in t["bottom"]:
+        cv.auto_text(130, ly, ln, 13, False, 1280, (68, 84, 106), anchor="lm")
+        ly += 30
+
+    cv.text(90, 740, t["step4"], fb(16), INK, anchor="lm")
+    cv.rect(110, 770, 1340, 116, fill=BLUE2_F, outline=BLUE, width=1.5, r=12)
+    ly = 804
+    for ln in t["discipline"]:
+        cv.auto_text(130, ly, ln, 13, False, 1280, (68, 84, 106), anchor="lm")
+        ly += 30
+    cv.save(out)
+
+
+TE = {
+    "zh": {
+        "title": "大型模式 · 新系统 / 大史诗",
+        "subtitle": "产品 → 史诗 → 模块 → 里程碑：每个史诗独立跑标准流程，只通过契约注册表衔接",
+        "s1": "第一步 · 产品按业务能力切分成史诗（人定边界，agent 提候选）",
+        "product": ("产品（整个系统）", "= 所有业务能力的总和"),
+        "split_label": "按业务能力切分",
+        "epics": [
+            ("EPIC-01 账户与认证", ["契约奠基 · 第一个做", "定义用户/会话共享契约", "最小可验证路径（薄片）"], ORANGE, ORANGE_F),
+            ("EPIC-02 商品目录", ["完整跑一遍标准流程", "引用 EPIC-01 契约", "↓ 下方展开模块并行"], GREEN, GREEN_F2),
+            ("EPIC-03 购物车", ["独立跑标准流程", "依赖 EPIC-01/02 契约", "引入购物车契约"], BLUE, BLUE_F),
+            ("EPIC-04 订单与支付", ["独立跑标准流程", "依赖购物车契约", "核心交易闭环"], PURPLE, PURPLE_F),
+            ("EPIC-05 后台管理", ["独立跑标准流程", "依赖全部前置契约", "最后一个做"], VIOLET, VIOLET_F),
         ],
-        "l3_note": "Epics share no context; parallel agents get separate task books and heartbeat files; recursive spawn is forbidden",
-        "l4_label": "Cross-Platform",
-        "l4_desc": ["Same flow on any agent platform", "core vs adaptation layer; only adapters differ"],
-        "l4": [
-            ("Codex", "native · Windows/macOS", BLUE, BLUE_F),
-            ("opencode", "sample adapter · role cards + Node scripts", GREEN, GREEN_F),
-            ("Other platforms", "community template + 6-capability acceptance", ORANGE, ORANGE_F),
+        "s1_note": "每个史诗都是一次完整的 A0→G0→PRD→G1→HLD→G2→拆解→G3→LLD→G4→开发→G5→集成 循环；史诗之间不共享上下文，只通过契约注册表衔接",
+        "s2": "第二步 · 单史诗内部：标准流程 + 模块并行（无依赖模块每批 2–3 个）",
+        "pipe": [
+            ("A0 需求锚定", "REQ 清单 · 可测 · 无废案", RED, RED_F),
+            ("PRD", "覆盖全部 REQ", BLUE, BLUE_F),
+            ("HLD", "技术方案 · 风险", BLUE, BLUE_F),
+            ("模块拆解", "3–8 个模块 + 边界", BLUE, BLUE2_F),
         ],
-        "bottom_left_title": "Universal Rules",
-        "bottom_left": [
-            "Distill requirements first: noise stays before the anchor",
-            "Producers never judge their own output: independent review",
-            "After contract freeze, changes ship as version upgrades",
-            "Files are the source of truth: handoff = path + one-page summary",
+        "pipe_labels": ["PRD", "HLD", "模块范围"],
+        "b4_title": "模块设计员",
+        "b4": ["B-4-1 LLD · 模块A", "B-4-2 LLD · 模块B", "B-4-3 LLD · 模块C"],
+        "b4_note": "接口登记契约注册表",
+        "b4_max": "…最多 8 个",
+        "b5_title": "模块开发员",
+        "b5": ["B-5-1 实现 · 模块A", "B-5-2 实现 · 模块B", "B-5-3 实现 · 模块C"],
+        "b5_note": "单测 + 契约测试",
+        "integration": ("集成：CI 编译 + 契约测试 + 全量回归", "代码合入 main · 产出可交付史诗增量"),
+        "s2_note": "门禁 G0-G5：评审通过才继续；契约冻结（G4）后变更走版本升级，禁止原地改已冻结文档；每 agent 独立任务书 + 独立心跳文件，禁止递归 spawn",
+        "s3": "第三步 · 史诗汇合 → 里程碑（可发布增量；依赖图由总控推导，范围与日期由人拍板）",
+        "milestones": [
+            ("里程碑 M1", ORANGE, ORANGE_F, ["EPIC-01", "EPIC-02"],
+             "可发布增量1：注册 / 登录 / 浏览商品 —— 薄片验证架构，契约奠基（先做）"),
+            ("里程碑 M2", GREEN, (237, 247, 239), ["EPIC-01", "EPIC-02", "EPIC-03", "EPIC-04"],
+             "可发布增量2：购物车 / 下单 / 支付 —— 核心交易闭环（依赖 M1）"),
+            ("里程碑 M3", PURPLE, (238, 241, 251), ["EPIC-01", "EPIC-02", "EPIC-03", "EPIC-04", "EPIC-05"],
+             "可发布增量3：后台管理 —— 产品完整可用（对外交付承诺：范围 + 日期由人签字）"),
         ],
-        "bottom_right_title": "Auto Escalation",
-        "bottom_right": [
-            "Quick → Standard: contracts / cross-module / architecture",
-            "Standard → Enterprise: >8 modules / parallelism + milestones",
-            "Enterprise → Quick: one-off small change",
-            "Every mode: heartbeat + ledgers for replay",
+        "b1_title": "④ 谁负责切分（委托度可配置）",
+        "b1": [
+            "产品 → 史诗：人定业务能力边界，agent 提候选（业务判断）",
+            "史诗 → 模块：B-3 按冻结 HLD 拆 3–8 个（可全委托）",
+            "史诗 → 里程碑：agent 推导依赖图，人定范围与日期（承诺签字）",
+            "全委托前提：优先级 / 硬日期 / 约束已写成输入文档",
+        ],
+        "b2_title": "⑤ 拆得太大的红线信号",
+        "b2": [
+            "薄片先行：先跑通最小可验证路径，再横向铺开",
+            "单史诗 > 8 个模块 / 单模块实现 > 3 周 → 再切一刀",
+            "A0 蒸馏一个会话未收敛 / PRD 超过十几页 → 史诗过大",
+            "契约奠基史诗（EPIC-01）必须最先跑，其余引用其契约",
+        ],
+    },
+    "en": {
+        "title": "Enterprise Mode · New System / Big Epic",
+        "subtitle": "Product → Epics → Modules → Milestones: every epic runs the Standard flow independently, linked only through the contract registry",
+        "s1": "Step 1 · Split the product into epics by business capability (humans set boundaries, agents propose candidates)",
+        "product": ("Product", "= sum of all business capabilities"),
+        "split_label": "split by capability",
+        "epics": [
+            ("EPIC-01 Account & Auth", ["contract foundation · do first", "defines user/session contracts", "smallest verifiable slice"], ORANGE, ORANGE_F),
+            ("EPIC-02 Catalog", ["full Standard flow", "references EPIC-01 contracts", "parallel modules below"], GREEN, GREEN_F2),
+            ("EPIC-03 Cart", ["independent Standard flow", "depends on EPIC-01/02", "introduces cart contract"], BLUE, BLUE_F),
+            ("EPIC-04 Order & Pay", ["independent Standard flow", "depends on cart contract", "core transaction loop"], PURPLE, PURPLE_F),
+            ("EPIC-05 Admin", ["independent Standard flow", "depends on all prior", "done last"], VIOLET, VIOLET_F),
+        ],
+        "s1_note": "Every epic is a full A0→G0→PRD→G1→HLD→G2→Split→G3→LLD→G4→Build→G5→Integrate loop; epics share no context, only the contract registry",
+        "s2": "Step 2 · Inside one epic: Standard flow + parallel modules (independent modules run in batches of 2-3)",
+        "pipe": [
+            ("A0 Anchor", "REQs · testable · no junk", RED, RED_F),
+            ("PRD", "covers all REQs", BLUE, BLUE_F),
+            ("HLD", "design · risks", BLUE, BLUE_F),
+            ("Split", "3-8 modules + boundaries", BLUE, BLUE2_F),
+        ],
+        "pipe_labels": ["PRD", "HLD", "module scope"],
+        "b4_title": "Module Designers",
+        "b4": ["B-4-1 LLD · Module A", "B-4-2 LLD · Module B", "B-4-3 LLD · Module C"],
+        "b4_note": "interfaces → contract registry",
+        "b4_max": "…up to 8",
+        "b5_title": "Module Developers",
+        "b5": ["B-5-1 Build · Module A", "B-5-2 Build · Module B", "B-5-3 Build · Module C"],
+        "b5_note": "unit + contract tests",
+        "integration": ("Integrate: CI build + contract tests + full regression", "merge to main · shippable epic increment"),
+        "s2_note": "Gates G0-G5: proceed only after review; after freeze (G4), changes ship as version upgrades — no in-place edits; each agent gets its own task book and heartbeat file; recursive spawn is forbidden",
+        "s3": "Step 3 · Epics converge → milestones (shippable increments; the controller derives the dependency graph, humans sign scope and dates)",
+        "milestones": [
+            ("Milestone M1", ORANGE, ORANGE_F, ["EPIC-01", "EPIC-02"],
+             "Increment 1: sign-up / login / browse catalog — thin slice validates architecture, lays contract foundation"),
+            ("Milestone M2", GREEN, (237, 247, 239), ["EPIC-01", "EPIC-02", "EPIC-03", "EPIC-04"],
+             "Increment 2: cart / checkout / payment — core transaction loop (depends on M1)"),
+            ("Milestone M3", PURPLE, (238, 241, 251), ["EPIC-01", "EPIC-02", "EPIC-03", "EPIC-04", "EPIC-05"],
+             "Increment 3: admin — product fully usable (scope + dates signed by humans)"),
+        ],
+        "b1_title": "④ Who splits (delegation is configurable)",
+        "b1": [
+            "Product → epics: humans set capability boundaries, agents propose candidates",
+            "Epic → modules: B-3 splits 3-8 from the frozen HLD (fully delegable)",
+            "Epic → milestones: agents derive the graph, humans sign scope and dates",
+            "Full delegation requires priorities / hard dates / constraints as input docs",
+        ],
+        "b2_title": "⑤ Red flags for oversized splits",
+        "b2": [
+            "Thin slice first: prove the smallest path before spreading out",
+            "Epic > 8 modules / module build > 3 weeks → split again",
+            "A0 not converged in one session / PRD beyond a dozen pages → epic too big",
+            "Contract foundation epic (EPIC-01) must run first; everything else references its contracts",
         ],
     },
 }
 
 
-def draw(lang, out):
-    img = Image.new("RGB", (W, H), (250, 251, 253))
-    d = ImageDraw.Draw(img)
-    t = T[lang]
-
-    def rect(x, y, w, h, fill=None, outline=None, width=2, r=12):
-        d.rounded_rectangle([x * S, y * S, (x + w) * S, (y + h) * S], radius=r * S,
-                            fill=fill, outline=outline, width=max(1, round(width * S)))
-
-    def text(x, y, s, font, fill=INK, anchor="mm"):
-        d.text((x * S, y * S), s, font=font, fill=fill, anchor=anchor)
-
-    def fits(s, size, bold, max_w):
-        f = fb(size) if bold else fr(size)
-        bb = d.textbbox((0, 0), s, font=f)
-        return (bb[2] - bb[0]) <= max_w * S
-
-    def auto_text(x, y, s, size, bold, max_w, fill=INK, anchor="mm", min_size=9):
-        sz = size
-        while sz > min_size and not fits(s, sz, bold, max_w):
-            sz -= 0.5
-        text(x, y, s, fb(sz) if bold else fr(sz), fill, anchor)
-
-    def line(x1, y1, x2, y2, color=GRAY, width=1.5):
-        d.line([x1 * S, y1 * S, x2 * S, y2 * S], fill=color, width=max(1, round(width * S)))
-
-    def arrow(x1, y1, x2, y2, color=GRAY, width=1.5):
-        line(x1, y1, x2, y2, color, width)
-        ang = math.atan2(y2 - y1, x2 - x1)
-        L = 9 * S
-        a1, a2 = ang + math.radians(150), ang - math.radians(150)
-        p1 = (x2 * S + L * math.cos(a1), y2 * S + L * math.sin(a1))
-        p2 = (x2 * S + L * math.cos(a2), y2 * S + L * math.sin(a2))
-        d.polygon([(x2 * S, y2 * S), p1, p2], fill=color)
-
-    # title
-    text(780, 44, t["title"], fb(26), INK)
-    text(780, 72, t["subtitle"], fr(14), SUB)
+def draw_enterprise(lang, out):
+    t = TE[lang]
+    cv = Cv(1560, 1320)
+    cv.text(780, 46, t["title"], fb(26), INK)
+    cv.text(780, 74, t["subtitle"], fr(14), SUB)
 
     # legend
-    lx = 1020
-    for label, color in t["legend"]:
-        d.rectangle([lx * S, 32 * S, (lx + 10) * S, 42 * S], fill=color)
-        text(lx + 14, 37, label, fr(11), INK, anchor="lm")
-        lx += 14 + fr(11).getlength(label) / S + 22
+    lx = 1150
+    for label, color in [("需求锚定", RED), ("设计", BLUE), ("实现/集成", GREEN)] if lang == "zh" else [("Anchor", RED), ("Design", BLUE), ("Build/Integrate", GREEN)]:
+        cv.d.rectangle([lx * S, 32 * S, (lx + 10) * S, 42 * S], fill=color)
+        cv.text(lx + 14, 37, label, fr(11), INK, anchor="lm")
+        lx += 14 + cv.text_w(label, 11, False) + 22
 
-    # ---- lane 1: quick ----
-    text(90, 112, t["l1_label"], fb(18), INK, anchor="lm")
-    text(90, 138, t["l1_desc"][0], fr(12), SUB, anchor="lm")
-    text(90, 158, t["l1_desc"][1], fr(12), SUB, anchor="lm")
-    xs1 = [330, 510, 700, 900, 1080, 1260]
-    ws1 = [160, 170, 180, 160, 160, 180]
-    for (title1, sub1, bcol, fcol), x, w in zip(t["l1"], xs1, ws1):
-        rect(x, 132, w, 66, fill=fcol, outline=bcol, width=2, r=10)
-        auto_text(x + w / 2, 154, title1, 13.5, True, w - 20)
-        auto_text(x + w / 2, 176, sub1, 11, False, w - 20, SUB)
-    for i in range(len(xs1) - 1):
-        arrow(xs1[i] + ws1[i] - 2, 165, xs1[i + 1] + 2, 165)
-    text(780, 216, t["l1_note"], fr(12), GRAY)
+    # section 1: product -> epics
+    cv.text(90, 108, t["s1"], fb(15), INK, anchor="lm")
+    cv.rect(640, 120, 280, 64, fill=PRODUCT, width=0, r=12)
+    cv.text(780, 147, t["product"][0], fb(18), WHITE)
+    cv.text(780, 170, t["product"][1], fr(12.5), PSUB)
+    cv.arrow(780, 184, 780, 212)
+    cv.text(792, 204, t["split_label"], fr(12), GRAY, anchor="lm")
+    xs = [115, 385, 655, 925, 1195]
+    for (title, lines, bcol, fcol), x in zip(t["epics"], xs):
+        cv.rect(x, 222, 250, 120, fill=fcol, outline=bcol, width=2, r=12)
+        cx = x + 125
+        cv.auto_text(cx, 250, title, 14.5, True, 230)
+        cv.auto_text(cx, 275, lines[0], 12, False, 230, (68, 84, 106))
+        cv.auto_text(cx, 296, lines[1], 12, False, 230, (68, 84, 106))
+        cv.auto_text(cx, 317, lines[2], 12, False, 230, (68, 84, 106))
+    cv.text(780, 363, t["s1_note"], fr(12.5), GRAY)
 
-    # ---- lane 2: standard ----
-    text(90, 248, t["l2_label"], fb(18), INK, anchor="lm")
-    text(90, 274, t["l2_desc"][0], fr(12), SUB, anchor="lm")
-    text(90, 294, t["l2_desc"][1], fr(12), SUB, anchor="lm")
-    x0, cw, gap = 268, 126, 24
-    ys = 268
-    for i, (title2, sub2, bcol, fcol) in enumerate(t["l2_stages"]):
-        x = x0 + i * (cw + gap)
-        if fcol is None:
-            rect(x, ys, cw, 70, fill=bcol, width=0, r=10)
-            auto_text(x + cw / 2, ys + 27, title2, 12.5, True, cw - 14, WHITE)
-            auto_text(x + cw / 2, ys + 49, sub2, 10.5, False, cw - 14, DGREEN_T)
-        else:
-            rect(x, ys, cw, 70, fill=fcol, outline=bcol, width=2, r=10)
-            auto_text(x + cw / 2, ys + 27, title2, 12.5, True, cw - 14)
-            auto_text(x + cw / 2, ys + 49, sub2, 10.5, False, cw - 14, SUB)
-    gate_pos = {0: "G0", 1: "G1", 2: "G2", 3: "G3", 6: "G5"}
-    for gi in range(7):
-        if gi not in gate_pos:
-            continue
-        chip_x = x0 + (gi + 1) * (cw + gap) - gap + 1
-        rect(chip_x, ys + 26, 22, 18, fill=RED_F, outline=RED, width=1.5, r=6)
-        auto_text(chip_x + 11, ys + 35, gate_pos[gi], 9.5, True, 18, RED)
-        arrow(x0 + gi * (cw + gap) + cw - 1, ys + 35, chip_x, ys + 35)
-        arrow(chip_x + 22, ys + 35, x0 + (gi + 1) * (cw + gap) + 1, ys + 35)
-    text(780, 362, t["l2_note"], fr(12), GRAY)
+    # section 2: standard flow + parallel modules
+    cv.text(90, 400, t["s2"], fb(15), INK, anchor="lm")
+    pxs = [90, 274, 458, 642]
+    for (t1, t2, bcol, fcol), x in zip(t["pipe"], pxs):
+        cv.rect(x, 424, 150, 66, fill=fcol, outline=bcol, width=2, r=10)
+        cv.auto_text(x + 75, 451, t1, 13.5, True, 130)
+        cv.auto_text(x + 75, 473, t2, 11, False, 130, SUB)
+    for i in range(3):
+        cv.arrow(pxs[i] + 150, 457, pxs[i + 1], 457)
+    for i, lbl in enumerate(t["pipe_labels"]):
+        cv.text(pxs[i] + 167, 446, lbl, fr(11), GRAY)
+    cv.arrow(717, 490, 270, 540)
+    cv.arrow(717, 490, 710, 540)
+    cv.arrow(717, 490, 1150, 540)
+    cv.text(733, 505, t["b4_title"], fr(11.5), GRAY, anchor="lm")
+    cv.text(733, 590, t["b5_title"], fr(11.5), GRAY, anchor="lm")
+    b4x = [140, 580, 1020]
+    for x, name in zip(b4x, t["b4"]):
+        cv.rect(x, 540, 260, 52, fill=BLUE2_F, outline=BLUE, width=2, r=10)
+        cv.auto_text(x + 130, 562, name, 13.5, True, 240)
+        cv.auto_text(x + 130, 582, t["b4_note"], 11, False, 240, SUB)
+    cv.text(1300, 562, t["b4_max"], fr(11), SUB, anchor="lm")
+    for x in b4x:
+        cv.arrow(x + 130, 592, x + 130, 640)
+    b5x = [140, 580, 1020]
+    for x, name in zip(b5x, t["b5"]):
+        cv.rect(x, 640, 260, 52, fill=GREEN_F, outline=GREEN, width=2, r=10)
+        cv.auto_text(x + 130, 662, name, 13.5, True, 240)
+        cv.auto_text(x + 130, 682, t["b5_note"], 11, False, 240, SUB)
+    cv.arrow(270, 692, 620, 748)
+    cv.arrow(710, 692, 780, 748)
+    cv.arrow(1150, 692, 940, 748)
+    cv.rect(560, 748, 440, 60, fill=DGREEN, width=0, r=12)
+    cv.auto_text(780, 774, t["integration"][0], 13.5, True, 420, WHITE)
+    cv.auto_text(780, 794, t["integration"][1], 12, False, 420, DGREEN_T)
+    cv.text(780, 828, t["s2_note"], fr(12), SUB)
 
-    # ---- lane 3: enterprise ----
-    text(90, 398, t["l3_label"], fb(18), INK, anchor="lm")
-    text(90, 424, t["l3_desc"][0], fr(12), SUB, anchor="lm")
-    text(90, 444, t["l3_desc"][1], fr(12), SUB, anchor="lm")
-    xs3a = [268, 438, 678]
-    ws3a = [150, 220, 250]
-    for (title3, sub3, bcol, fcol), x, w in zip(t["l3a"], xs3a, ws3a):
-        if fcol is None:
-            rect(x, 420, w, 70, fill=bcol, width=0, r=10)
-            auto_text(x + w / 2, 442, title3, 13, True, w - 20, WHITE)
-            auto_text(x + w / 2, 464, sub3, 11, False, w - 20, PSUB)
-        else:
-            rect(x, 420, w, 70, fill=fcol, outline=bcol, width=2, r=10)
-            auto_text(x + w / 2, 442, title3, 13, True, w - 20)
-            auto_text(x + w / 2, 464, sub3, 11, False, w - 20, SUB)
-    arrow(418, 455, 438, 455)
-    arrow(658, 455, 678, 455)
-    xs3b = [268, 488, 708, 948]
-    ws3b = [200, 200, 220, 180]
-    for (title3, sub3, bcol, fcol), x, w in zip(t["l3b"], xs3b, ws3b):
-        if fcol is None:
-            rect(x, 520, w, 70, fill=bcol, width=0, r=10)
-            auto_text(x + w / 2, 542, title3, 13, True, w - 20, WHITE)
-            auto_text(x + w / 2, 564, sub3, 11, False, w - 20, DGREEN_T)
-        else:
-            rect(x, 520, w, 70, fill=fcol, outline=bcol, width=2, r=10)
-            auto_text(x + w / 2, 542, title3, 13, True, w - 20)
-            auto_text(x + w / 2, 564, sub3, 11, False, w - 20, SUB)
-    arrow(418, 555, 488, 555)
-    arrow(688, 555, 708, 555)
-    arrow(928, 555, 948, 555)
-    arrow(803, 490, 803, 520)
-    text(780, 610, t["l3_note"], fr(12), GRAY)
+    # section 3: milestones
+    cv.text(90, 866, t["s3"], fb(15), INK, anchor="lm")
+    my = 884
+    epic_border = {"EPIC-01": ORANGE, "EPIC-02": GREEN, "EPIC-03": BLUE, "EPIC-04": PURPLE, "EPIC-05": VIOLET}
+    for label, bcol, fcol, chips, desc in t["milestones"]:
+        cv.rect(190, my, 1180, 74, fill=fcol, outline=bcol, width=2, r=12)
+        cv.rect(206, my + 14, 120, 40, fill=bcol, width=0, r=8)
+        cv.auto_text(266, my + 34, label, 13, True, 104, WHITE)
+        cx = 350
+        for c in chips:
+            cv.rect(cx, my + 16, 96, 30, fill=WHITE, outline=epic_border[c], width=2, r=6)
+            cv.auto_text(cx + 48, my + 31, c, 12, True, 88)
+            cx += 112
+        cv.auto_text(780, my + 58, desc, 12.5, False, 640, (68, 84, 106))
+        my += 88
 
-    # ---- lane 4: platforms ----
-    text(90, 650, t["l4_label"], fb(18), INK, anchor="lm")
-    text(90, 676, t["l4_desc"][0], fr(12), SUB, anchor="lm")
-    text(90, 696, t["l4_desc"][1], fr(12), SUB, anchor="lm")
-    xs4 = [330, 540, 800]
-    ws4 = [190, 330, 300]
-    for (title4, sub4, bcol, fcol), x, w in zip(t["l4"], xs4, ws4):
-        rect(x, 680, w, 62, fill=fcol, outline=bcol, width=2, r=10)
-        auto_text(x + w / 2, 700, title4, 13.5, True, w - 20)
-        auto_text(x + w / 2, 722, sub4, 11, False, w - 20, SUB)
-
-    # ---- bottom cards ----
-    rect(90, 1160, 690, 128, fill=WHITE, outline=CARD_LN, width=1.5, r=12)
-    text(110, 1188, t["bottom_left_title"], fb(15), INK, anchor="lm")
-    ly = 1212
-    for ln in t["bottom_left"]:
-        text(110, ly, ln, fr(12.5), (68, 84, 106), anchor="lm")
+    # bottom cards
+    cv.rect(90, 1164, 690, 126, fill=WHITE, outline=CARD_LN, width=1.5, r=12)
+    cv.text(110, 1190, t["b1_title"], fb(15), INK, anchor="lm")
+    ly = 1215
+    for ln in t["b1"]:
+        cv.auto_text(110, ly, ln, 12.5, False, 650, (68, 84, 106), anchor="lm")
         ly += 23
-
-    rect(800, 1160, 690, 128, fill=WHITE, outline=CARD_LN, width=1.5, r=12)
-    text(820, 1188, t["bottom_right_title"], fb(15), INK, anchor="lm")
-    ly = 1212
-    for ln in t["bottom_right"]:
-        text(820, ly, ln, fr(12.5), (68, 84, 106), anchor="lm")
+    cv.rect(800, 1164, 690, 126, fill=WHITE, outline=CARD_LN, width=1.5, r=12)
+    cv.text(820, 1190, t["b2_title"], fb(15), INK, anchor="lm")
+    ly = 1215
+    for ln in t["b2"]:
+        cv.auto_text(820, ly, ln, 12.5, False, 650, (68, 84, 106), anchor="lm")
         ly += 23
+    cv.save(out)
 
-    img.save(out)
-    print("saved:", out, img.size)
+
+def main():
+    base = r"D:\Agent\work space\services\codex树形标准开发流程"
+    draw_quick("zh", base + r"\flow-quick-zh.png")
+    draw_quick("en", base + r"\flow-quick-en.png")
+    draw_standard("zh", base + r"\flow-standard-zh.png")
+    draw_standard("en", base + r"\flow-standard-en.png")
+    draw_enterprise("zh", base + r"\flow-enterprise-zh.png")
+    draw_enterprise("en", base + r"\flow-enterprise-en.png")
 
 
 if __name__ == "__main__":
-    draw("zh", r"D:\Agent\work space\services\codex树形标准开发流程\产品到落地-三场景全景图.png")
-    draw("en", r"D:\Agent\work space\services\codex树形标准开发流程\product-to-delivery-three-scenarios-en.png")
+    main()
