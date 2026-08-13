@@ -18,7 +18,7 @@
 
 | 能力 | ZCode 原生机制 | 实测 | 文件式兜底 |
 |---|---|---|---|
-| spawn | `Agent` 工具：prompt 直达子 agent，`description` 写「读 <任务书路径> 执行任务」 | ✅ 可靠（本会话实机验证：prompt 完整可达、任务可执行） | 任务书路径 + current.md 镜像 |
+| spawn | `Agent` 工具：`subagent_type` 指定 profile（`devflow-*`，本目录 `agents/`），`description` 写「读 <任务书路径> 执行任务」；prompt 直达可靠 | ✅ 可靠（实机验证：profile 格式被原生解析，Agent 工具按名匹配） | 任务书路径 + current.md 镜像 |
 | message | prompt 直达 + `SendMessage`（agent 间消息）+ `TaskOutput` 查执行结果 | ✅ 可靠 | 任务书为唯一真相 |
 | interrupt | `TaskStop` 编程式中断；background 任务完成自动通知主会话并回收 | ✅ 完成即回收（本会话 background 子任务完成后自动通知） | 每轮单 agent + STATE Agent Registry |
 | list | `/tasks` 命令 + `TaskOutput` 状态查询 | ✅ 可用 | STATE Agent Registry |
@@ -41,7 +41,36 @@ Copy-Item -LiteralPath '.\analyze-idea'             -Destination "$env:USERPROFI
 
 把 [docs/global-agents.md.example](../../docs/global-agents.md.example) 的内容放入 `~/.zcode/AGENTS.md`，所有 ZCode 会话自动加载 skill 触发规则。
 
-### 3.3 项目（每次新项目）
+### 3.3 子 agent profiles（项目级，每次新项目）
+
+ZCode 原生 subagent 定义 = Markdown + frontmatter，放 `<项目>/.zcode/agents/`（仅该项目可用、随 git 版本化）；用户级可放 `~/.zcode/agents/`（所有项目）。本仓库维护 5 个流程角色 profile 源（`agents/`），复制到项目：
+
+```powershell
+# 项目级（推荐，随仓库提交）
+Copy-Item -LiteralPath '.\agents' -Destination '.\zcode\agents' -Recurse -Force   # 注意：仓库内为 adapters/zcode/agents
+# 用户级（所有项目可用）
+Copy-Item -LiteralPath '.\agents\devflow-*.md' -Destination "$env:USERPROFILE\.zcode\agents\" -Force
+```
+
+Profile frontmatter 字段（ZCode 原生解析，`~/.zcode/agents/` 与 `<项目>/.zcode/agents/` 两处）：
+
+```markdown
+---
+name: devflow-module-developer   # 必填，Agent 工具 subagent_type 按此匹配
+description: 模块开发员：...      # 必填
+tools: [Bash, Read, Write, Edit, Grep, Glob, TodoWrite]   # 工具白名单
+disallowedTools: [Agent, TaskStop, SendMessage]            # 禁用工具（评审员禁 Agent=禁递归 spawn）
+color: orange                    # 可选
+permissionMode: auto             # 可选
+maxTurns: N                      # 可选
+memory: user                     # 可选
+---
+Markdown body = 系统提示词（角色卡内容）
+```
+
+内置保留名（general-purpose / explore 等）不可覆盖，自定义名无冲突。
+
+### 3.4 项目（每次新项目）
 
 1. 项目 `AGENTS.md` 只写身份：产品名、当前史诗、STATE 指针（`docs/process/STATE.md`）。
 2. 任务书（`assets/templates/06-task.md`）的心跳/长命令脚本路径，引用已安装 skill 的 `scripts/node/`：
@@ -56,17 +85,19 @@ Copy-Item -LiteralPath "$env:USERPROFILE\.zcode\skills\vibecoding-orchestration\
 
 ## 4. 角色卡
 
-`role-cards/` 下 5 张卡（`Agent` 工具 prompt 模板格式，`role-card.md.example` 派生）：
+`agents/` 下 5 个**原生 subagent profiles**（Markdown + frontmatter，`Agent` 工具按 `subagent_type` 名直接匹配；安装见 §3.3）：
 
-| 文件 | 委派方式 | 对应流程角色 |
-|---|---|---|
-| `zcode-controller.md` | 主会话（skill 的 SKILL.md 即总控指引） | 总控负责人 |
-| `zcode-module-designer.md` | Agent 工具（general-purpose） | 模块设计员 |
-| `zcode-module-developer.md` | Agent 工具（general-purpose） | 模块开发员 |
-| `zcode-architect-reviewer.md` | Agent 工具（general-purpose，prompt 声明只读） | 架构评审员（G2，只读） |
-| `zcode-qa-reviewer.md` | Agent 工具（general-purpose，prompt 声明只读） | QA 评审员（G5，只读） |
+| 文件 | profile 名（subagent_type） | 对应流程角色 | 权限 |
+|---|---|---|---|
+| `devflow-controller.md` | devflow-controller | 总控负责人（主会话角色） | tools 全开 |
+| `devflow-module-designer.md` | devflow-module-designer | 模块设计员 | 禁 Agent/TaskStop/SendMessage |
+| `devflow-module-developer.md` | devflow-module-developer | 模块开发员 | 禁 Agent/TaskStop/SendMessage |
+| `devflow-architect-reviewer.md` | devflow-architect-reviewer | 架构评审员（G2） | 禁 Agent/TaskStop/SendMessage；只读由 prompt + 任务书 Scope Lock 约束 |
+| `devflow-qa-reviewer.md` | devflow-qa-reviewer | QA 评审员（G5） | 禁 Agent/TaskStop/SendMessage；只读由 prompt + 任务书 Scope Lock 约束 |
 
-> 差异：ZCode `Agent` 工具无原生权限字段（opencode 有 `edit: deny` / `task: deny`），评审员「只读、禁止递归」靠 prompt 明示 + 任务书 Scope Lock 约束（见「已知限制」）。
+> `role-cards/` 下旧版 `zcode-*.md`（Agent 工具 prompt 模板格式）保留作参考：若未安装 profiles，可把整卡内容粘贴进 Agent 工具 `prompt` 使用（与验收等价）。**推荐改用原生 profiles**——`disallowedTools: [Agent]` 硬性禁止递归 spawn，比 prompt 声明强。
+>
+> 差异：ZCode 的 `disallowedTools` 支持工具级禁用（opencode 的 `edit: deny` 是路径级），评审员「只写评审报告」仍需 prompt + 任务书 Scope Lock 约束写路径。
 
 ## 5. 心跳方案
 
@@ -90,9 +121,10 @@ node <scripts/node 路径>/long-cmd.mjs --project-path <项目> --log-file docs/
 
 1. 主会话按流程产出需求锚点 → PRD → HLD → 拆解 → LLD。
 2. G4 冻结契约后，写任务书 `docs/process/tasks/<task_name>.md` + `current.md` 镜像（预填心跳命令、Scope Lock、关键接口速查）。
-3. 在主会话调用 `Agent` 工具：
+3. 在主会话调用 `Agent` 工具（profile 已装到项目 `.zcode/agents/`）：
+   - `subagent_type`: `devflow-module-designer`（或 `devflow-module-developer` / `devflow-architect-reviewer` / `devflow-qa-reviewer`）
    - `description`: `执行 vibecoding-orchestration 流程：读 docs/process/tasks/<task_name>.md 执行任务；先引用"任务"段原文复述，再开工`
-   - `prompt`: 对应角色卡内容（`role-cards/zcode-module-designer.md` 等）+ 任务书路径。
+   - `prompt`: 只写任务书路径与当前任务上下文（角色卡已由 profile 注入，无需重复粘贴）。
    - 需要后台并行时 `run_in_background: true`，多轮任务可一次消息发起多个 Agent 调用。
 4. 通过心跳文件与 `TaskOutput` 观察子会话；完成后更新 STATE 与 Agent Registry。
 5. 评审轮：spawn 架构评审员 / QA 评审员，独立报告落盘后过门禁。
@@ -101,10 +133,10 @@ node <scripts/node 路径>/long-cmd.mjs --project-path <项目> --log-file docs/
 
 | 限制 | 绕法 |
 |---|---|
-| `Agent` 工具无原生权限字段（不能 `edit: deny` / `task: deny`） | 评审员卡 prompt 明示「只读、禁止修改任何文件、禁止 spawn」；任务书 Scope Lock 收紧允许修改范围；总控把关 |
+| profile `disallowedTools` 是工具级禁用（无 opencode 的路径级 `edit: deny`） | 评审员只写评审报告：profile 禁 Agent 防递归 + prompt/任务书 Scope Lock 约束写路径；总控把关 |
 | hooks 是否覆盖子 agent 工具调用未实测 | 心跳一律走显式 `update-heartbeat.mjs`（必选），主会话自动心跳仅作增强 |
-| 子 agent 上下文 = prompt + description，不继承主会话对话 | 与「零上下文继承 + 自包含任务书」一致，任务书必须完整 |
-| 本适配器未实机验收 | 按 `adapters/README.md` 验收清单补跑后更新本节 |
+| 子 agent 上下文 = profile systemPrompt + prompt + description，不继承主会话对话 | 与「零上下文继承 + 自包含任务书」一致，任务书必须完整 |
+| profile 加载需 ZCode 重启/重载配置生效（profiles 在会话启动时扫描） | 新装 profile 后重开会话；`subagent_type` 找不到时回退 general-purpose + prompt 粘贴（role-cards 兜底） |
 
 ## 8. 实机验收记录（2026-08-13）
 
@@ -124,3 +156,4 @@ node <scripts/node 路径>/long-cmd.mjs --project-path <项目> --log-file docs/
 1. **spawn 事件未入调度账**：验收时实际 spawn 走 ZCode `Agent` 工具，但总控未用 `record-event` 记 `spawn_start/spawn_success`，导致 analyze-flow 显示「spawn: 无匹配调度记录、槽位未回收」。修复：总控委派 Agent 工具前后各记一次 `spawn_start`/`spawn_success` 事件（含 agentId）。
 2. **QA 评审观察项**：① 并行批次新增的 `greet_loud`/`farewell_loud` 未登记 LLD（不影响冻结契约，测试已覆盖）；② 追踪矩阵状态列未随 dev 轮更新。均为文档纪律问题，不属平台缺陷。
 3. **hooks 覆盖子 agent 待测**：本适配器心跳走显式命令即通过验收，未依赖 hooks；后续可实测 ZCode hooks（PostToolUse 等）是否拦截子 agent 工具调用，若覆盖则主会话可自动心跳（增强项，协议不依赖）。
+4. **原生 subagent profiles（事后补测）**：从 ZCode 运行时（`resources/glm/zcode.cjs`）确认原生 subagent 机制 = Markdown + frontmatter，放 `~/.zcode/agents/`（用户级）或 `<项目>/.zcode/agents/`（项目级），`Agent` 工具 `subagent_type` 按 `name` 匹配；`disallowedTools: [Agent]` 可原生禁递归 spawn。已据此新增 `agents/` 5 个 profile 源（§3.3/§4）。profile 加载在会话启动时扫描，新装后需重开会话；`subagent_type` 未命中时回退 general-purpose（role-cards 兜底）。profile 的实际实机 spawn 调用（非源码解析确认）留待下次会话跑一轮补录。
