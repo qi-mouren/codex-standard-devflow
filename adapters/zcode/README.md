@@ -2,7 +2,7 @@
 
 把本流程的「文件式执行协议」映射到 ZCode（zcode CLI，`~/.zcode`）。ZCode 的子 agent 经 `Agent` 工具 spawn，prompt 直达可靠，编排能力比 Codex 原生层更简单——**Codex 环境适配层里为消息通道/槽位泄漏/上下文继承准备的补偿规则，在 ZCode 基本用不上**。
 
-状态：**社区贡献，待实机验收**（验收清单见 `adapters/README.md`；本适配器随「接入 ZCode」实测完成安装与单 agent 闭环，并行/中断/门禁闭环待补跑）。
+状态：**社区贡献，已实机验收**（2026-08-13，验收记录见文末「8. 实机验收记录」；验收清单对照见 `adapters/README.md`）。
 
 ## 1. 平台信息
 
@@ -104,5 +104,23 @@ node <scripts/node 路径>/long-cmd.mjs --project-path <项目> --log-file docs/
 | `Agent` 工具无原生权限字段（不能 `edit: deny` / `task: deny`） | 评审员卡 prompt 明示「只读、禁止修改任何文件、禁止 spawn」；任务书 Scope Lock 收紧允许修改范围；总控把关 |
 | hooks 是否覆盖子 agent 工具调用未实测 | 心跳一律走显式 `update-heartbeat.mjs`（必选），主会话自动心跳仅作增强 |
 | 子 agent 上下文 = prompt + description，不继承主会话对话 | 与「零上下文继承 + 自包含任务书」一致，任务书必须完整 |
-| 并行 Agent spawn 行为未在本适配器实机验收 | 本会话已验证单 agent 闭环；并行先 2 个起步验证再放开 |
 | 本适配器未实机验收 | 按 `adapters/README.md` 验收清单补跑后更新本节 |
+
+## 8. 实机验收记录（2026-08-13）
+
+验收项目：临时目录 `%TEMP%\zcode-adapter-acceptance`（hello-utils EPIC-01，Python 标准库纯函数库，本地 git 库），按 `adapters/README.md` 验收清单逐项跑通：
+
+| # | 验收项 | 结果 | 证据 |
+|---|---|---|---|
+| 1 | spawn 模块设计员 → 读任务书 → 复述 → 产出 LLD | ✅ | `docs/04-lld/greet.md`/`farewell.md` 落盘，契约签名逐字一致；心跳账 `run-1.jsonl` 4 条 |
+| 2 | spawn 模块开发员 → 按 LLD+契约实现 → 本模块测试通过 | ✅ | `src/`+`tests/` 落盘，`python -m unittest` 4/4 全绿；`run-2.jsonl` 3 条 |
+| 3 | 并行 2 个同角色 agent，心跳互不覆盖、产出不冲突 | ✅ | `impl_greet_loud`/`impl_farewell_loud` 同时产出（6/6 全绿）；`.heartbeat-mod_greet`/`.heartbeat-mod_farewell` 独立；`run-3.jsonl` 两 task 共 5 条 |
+| 4 | interrupt 可回收、可重开，不泄漏槽位 | ✅ | `TaskStop` 中断 sleep 120 中的 `slow_probe` 成功（status=stopped）；同名 task_name 立即重开成功；`run-4.jsonl` |
+| 5 | G5 独立评审（评审员 ≠ 产出者）报告落盘 | ✅ | `docs/process/reviews/qa-2026-08-13.md` 结论 PASS；评审员只读、未改任何项目文件；`run-5.jsonl` 4 条 |
+| 6 | 复盘：基于日志输出时间线与异常 | ✅ | `analyze-flow.mjs` 输出 11 个调度事件时间线 + 5 轮心跳明细 + 异常提示 |
+
+**验收记录到的观察项（非阻塞，后续改进）**：
+
+1. **spawn 事件未入调度账**：验收时实际 spawn 走 ZCode `Agent` 工具，但总控未用 `record-event` 记 `spawn_start/spawn_success`，导致 analyze-flow 显示「spawn: 无匹配调度记录、槽位未回收」。修复：总控委派 Agent 工具前后各记一次 `spawn_start`/`spawn_success` 事件（含 agentId）。
+2. **QA 评审观察项**：① 并行批次新增的 `greet_loud`/`farewell_loud` 未登记 LLD（不影响冻结契约，测试已覆盖）；② 追踪矩阵状态列未随 dev 轮更新。均为文档纪律问题，不属平台缺陷。
+3. **hooks 覆盖子 agent 待测**：本适配器心跳走显式命令即通过验收，未依赖 hooks；后续可实测 ZCode hooks（PostToolUse 等）是否拦截子 agent 工具调用，若覆盖则主会话可自动心跳（增强项，协议不依赖）。

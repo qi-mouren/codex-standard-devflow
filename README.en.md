@@ -100,7 +100,7 @@ The core flow is platform-agnostic; only "sub-agent orchestration capabilities" 
 
 - [Adapter contract & acceptance checklist](adapters/README.md): six capabilities (spawn / message / interrupt / list / shell / heartbeat) + community contribution flow.
 - [opencode sample adapter](adapters/opencode/README.md): role cards, heartbeat script, config example.
-- [zcode adapter](adapters/zcode/README.md): ZCode install steps, role cards, heartbeat plan (community contribution, pending live acceptance).
+- [zcode adapter](adapters/zcode/README.md): ZCode install steps, role cards, heartbeat plan (community contribution, live acceptance passed).
 - [Blank template](adapters/_template/README.md): starting point for Claude / any other platform.
 
 ## Repository Layout
