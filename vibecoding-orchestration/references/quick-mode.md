@@ -7,6 +7,8 @@
 - 修 bug、加小接口、小重构：**不跨模块、不触碰契约、验收可直接判定、改动面小**（建议 <200 行）
 - 不满足任一条 → 回 standard/enterprise 模式（走完整流程）
 
+> 辅助判断：`scripts/node/classify-change.mjs --project-path <项目>` 会按改动文件数/行数/跨模块/碰契约给出 Quick/Standard/Enterprise 建议（启发式，最终由人/总控拍板）。G-quick 即「Task Gate」，门禁分级见 `references/gates.md`。
+
 ## 流程
 
 1. **需求**：一句话 + 验收口径（可直接写在任务书里，不产出 PRD）
@@ -25,3 +27,4 @@
 
 - 触碰契约 / 跨模块 / 涉及架构决策 → 自动升级 standard 模式
 - 快速模式不豁免心跳、watchdog、账本记录（小改动也是可追溯的）
+- 任务书骨架可用 `scripts/node/generate-taskbooks.mjs --phase design|build` 从 scope 生成，生成后总控必须预审再放行

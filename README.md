@@ -1,6 +1,8 @@
+🌐 **Language:** [English](README.en.md) · [中文](README.md)
+
 # Vibecoding Orchestration（vibe coding 全流程编排）
 
-> [English](README.en.md) · 曾用名 standard-devflow
+> 曾用名 standard-devflow
 
 把「vibe coding」从聊天式编码收敛成**可交付流程**的多 Agent 编排框架：小改动、中型功能、大型项目三档模式，同一套门禁与契约底线。
 

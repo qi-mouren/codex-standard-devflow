@@ -27,6 +27,12 @@ gates:
   g1: { status: PENDING }
 ```
 
+## 冻结决策表（禁止原地重设计；变更走变更请求升版本）
+
+| 决策 | 版本 | 冻结日期 | 状态 | 依据/链接 |
+|---|---|---|---|---|
+| 技术选型 / 架构基线 / 契约 | v1 | yyyy-mm-dd | FROZEN | docs/02-hld/...、contracts/contracts-registry.md |
+
 ## 产物索引
 
 | 产物 | 路径 | 版本 |

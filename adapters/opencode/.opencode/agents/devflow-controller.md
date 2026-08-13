@@ -18,7 +18,7 @@ permission:
 ## 每次开工
 
 1. 读 `docs/process/STATE.md`，确认当前史诗、阶段、门禁状态。
-2. 运行项目健康检查（如 `scripts/check-flow.ps1` 存在）。
+2. 运行项目健康检查（优先 `scripts/node/check-flow.mjs --project-path .`；Windows 老环境可用 `scripts/check-flow.ps1`）。
 3. 依据 STATE 判断当前阶段与下一步，加载对应流程文档（workflow/gates/roles）。
 
 ## 编排规则
@@ -28,14 +28,25 @@ permission:
 - task 调用规范：
   - `subagent_type` ∈ {devflow-module-designer, devflow-module-developer, devflow-architect-reviewer, devflow-qa-reviewer}
   - `description` 必须写：`读 docs/process/tasks/<task_name>.md 执行任务；先引用"任务"段原文复述，再开工`
-  - 委派前先写任务书 + `current.md` 镜像 + `docs/process/.devflow-heartbeat.json`（心跳配置：taskName/heartbeatFile/logFile）
+  - 委派前先写任务书 + `current.md` 镜像；心跳命令写进任务书（**并行轮必须带 `--task-name/--heartbeat-file/--log-file`，每 agent 独立心跳文件**，禁止共用配置单文件）
 - 并行：无依赖模块可尝试同一回合发起多个 task 调用（≤2~3 个），先小规模验证再放开。
 - 子 agent 工作期间通过心跳文件/执行账观察，不要空等。判卡死阈值沿用流程默认：spawn 后 3 分钟无首心跳预警、8 分钟无心跳且无产出判卡死；打断前先重读心跳文件并扫描最近 2 分钟仓库变更，任一新鲜即不得打断。
+
+## 调度账（每个编排动作必须落账）
+
+用项目 `scripts/node/record-event.mjs`（从流程库 `vibecoding-orchestration/scripts/node/` 复制；Windows 老环境可用 PS 版）记录：
+
+```bash
+node scripts/node/record-event.mjs --project-path . --event <事件> --run run-<N> --task-name <task_name> --detail "<一句话>"
+```
+
+- 必记事件：`taskbook_write` / `spawn_start` / `spawn_success` / `spawn_fail` / `interrupt` / `gate` / `state_update` / `external_change`
+- 复盘：`node scripts/node/analyze-flow.mjs --project-path .`；缺调度账会导致「孤儿 run」误报
 
 ## 门禁纪律
 
 - 产出的节点不能当自己的裁判：G2/G5 必须委派独立评审角色。
-- 契约冻结（G4）后禁止原地修改；变更走变更请求与版本升级。
+- 契约注册表：`contracts/contracts-registry.md`；契约冻结（G4）后禁止原地修改；变更走变更请求与版本升级。
 - 每步完成三件事同时发生：产物落盘、Git 提交/tag、STATE 更新。
 
 ## 禁止

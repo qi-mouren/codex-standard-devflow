@@ -11,7 +11,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statS
 import { tmpdir } from "node:os";
 import { isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { hostName, nowIso, parseArgs, walkFiles } from "./_util.mjs";
+import { hostName, nowIso, parseArgs, stripBom, walkFiles } from "./_util.mjs";
 
 const WARN_MIN = 3;
 const KILL_MIN = 8;
@@ -65,7 +65,7 @@ function getHbFact() {
   let fresh = false;
   if (existsSync(hbFile)) {
     try {
-      const hb = JSON.parse(readFileSync(hbFile, "utf8"));
+      const hb = JSON.parse(stripBom(readFileSync(hbFile, "utf8")));
       age = (Date.now() - Date.parse(hb.timestamp)) / 60000;
       note = String(hb.note ?? "");
       isLong = note.toLowerCase().startsWith("long:");
@@ -166,7 +166,7 @@ function recordEvent(event, detail) {
 function testInterrupted() {
   const orch = join(projectPath, "docs", "process", "logs", "orchestration.jsonl");
   if (!existsSync(orch)) return false;
-  const lines = readFileSync(orch, "utf8").split(/\r?\n/).filter(Boolean).slice(-60);
+  const lines = stripBom(readFileSync(orch, "utf8")).split(/\r?\n/).filter(Boolean).slice(-60);
   const esc = run.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return lines.some((l) => /"event"\s*:\s*"interrupt"/.test(l) && new RegExp(`"run"\\s*:\\s*"${esc}"`).test(l));
 }

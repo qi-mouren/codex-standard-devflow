@@ -45,6 +45,8 @@
     - `watchdog.mjs` ↔ `watchdog.ps1`：`--once` 取证；后台监控用 `node watchdog.mjs ...` 启动
     - `long-cmd.mjs` ↔ `long-cmd.ps1`：Windows 用 `powershell.exe -Command`（保持 PS 执行语义），macOS/Linux 用 `/bin/sh -c`；cwd 固定项目根
     - `check-flow.mjs` / `analyze-flow.mjs` / `run-tests-parallel.mjs` / `consolidate-docs.mjs` ↔ 同名 PS；`analyze-flow` 的 `--out-file` 相对项目根解析
+    - `classify-change.mjs`：改动启发式 → 建议 Quick/Standard/Enterprise（`--files` 或 git diff；`--json` 结构化输出；建议非强制）
+    - `generate-taskbooks.mjs`：scope.md → 每模块任务书骨架（`--phase design|build`、`--run`、`--overwrite`、`--mirror-current`；spawn 前必须总控预审）
     - 冒烟：`scripts/node/_smoke.mjs`（本地 + GitHub Actions 三平台 windows/macos/ubuntu 矩阵）
     使用规则：Windows Codex 会话可继续用 PS 版；macOS/Linux 或 opencode 环境一律用 node 版；任务书里的心跳命令写 node 版（跨平台）；两套脚本维护同一文件语义（心跳快照、JSONL 账本、锁文件），可混用。
 

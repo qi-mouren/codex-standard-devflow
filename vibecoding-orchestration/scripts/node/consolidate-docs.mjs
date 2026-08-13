@@ -8,7 +8,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseArgs } from "./_util.mjs";
+import { parseArgs, stripBom } from "./_util.mjs";
 
 const args = parseArgs(process.argv.slice(2), [
   { name: "projectPath", type: "string" },
@@ -67,7 +67,7 @@ if (existsSync(join(projectPath, "contracts", "contracts-registry.md"))) {
 // 2. 从 STATE 门禁记录探测史诗
 const epics = [];
 if (existsSync(stateFile)) {
-  const state = readFileSync(stateFile, "utf8");
+  const state = stripBom(readFileSync(stateFile, "utf8"));
   for (const m of state.matchAll(/g0[-_](epic\d+)/gi)) {
     const e = m[1].toLowerCase();
     if (!epics.includes(e)) epics.push(e);

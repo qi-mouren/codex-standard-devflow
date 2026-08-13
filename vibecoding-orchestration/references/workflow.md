@@ -51,6 +51,7 @@
 | 当前进度 | docs/process/STATE.md | 总控负责人 |
 | 追踪矩阵 | docs/process/traceability.md | 总控负责人 |
 | 契约注册表 | contracts/contracts-registry.md | 详细设计 |
+| 冻结决策表 | STATE.md「冻结决策表」节 | 总控负责人 |
 | 冻结基线 | Git tag vX-contracts-frozen | 总控负责人 |
 
 门禁通过 = 产物落盘 + tag + STATE 更新，三件事必须同时发生。
