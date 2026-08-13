@@ -100,7 +100,8 @@ python "$env:CODEX_HOME\skills\.system\skill-creator\scripts\quick_validate.py" 
 
 - [适配契约与验收清单](adapters/README.md)：六项能力（spawn / message / interrupt / list / shell / heartbeat）+ 社区贡献流程。
 - [opencode 样板适配器](adapters/opencode/README.md)：角色卡、心跳脚本与配置示例，官方维护。
-- [空模板](adapters/_template/README.md)：给其他平台（zcode / claude / 其他）从零起步。
+- [zcode 适配器](adapters/zcode/README.md)：ZCode 平台安装、角色卡与心跳方案（社区贡献，待实机验收）。
+- [空模板](adapters/_template/README.md)：给其他平台（claude / 其他）从零起步。
 
 ## 仓库结构
 
