@@ -1,0 +1,4 @@
+interface:
+  display_name: "想法分析"
+  short_description: "分析商业想法：值不值得做、适不适合当前资源、怎么最小代价验证"
+  default_prompt: "Use $analyze-idea to analyze this business idea: is it worth doing, does it fit the current resources, and how to validate it cheaply?"
