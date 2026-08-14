@@ -43,13 +43,18 @@ Copy-Item -LiteralPath '.\analyze-idea'             -Destination "$env:USERPROFI
 
 ### 3.3 子 agent profiles（项目级，每次新项目）
 
-ZCode 原生 subagent 定义 = Markdown + frontmatter，放 `<项目>/.zcode/agents/`（仅该项目可用、随 git 版本化）；用户级可放 `~/.zcode/agents/`（所有项目）。本仓库维护 5 个流程角色 profile 源（`agents/`），复制到项目：
+ZCode 原生 subagent 定义 = Markdown + frontmatter，放 `<项目>/.zcode/agents/`（仅该项目可用、随 git 版本化）；用户级可放 `~/.zcode/agents/`（所有项目）。本仓库维护两套 profile 源（`agents/`）：
+
+- **9 个流程角色卡（角色名命名，`requirement-owner.md` 等）**：完整角色集（需求/PRD/架构/拆解/LLD/模块设计/模块开发/架构评审/QA 评审），与 `references/roles.md` 一一对应，全局安装用这套。
+- **5 个 devflow-* 结构卡（`devflow-*.md`）**：早期结构化变体（含工具白名单/禁递归字段），保留兼容。
+
+复制到项目或用户级：
 
 ```powershell
 # 项目级（推荐，随仓库提交）
 Copy-Item -LiteralPath '.\agents' -Destination '.\zcode\agents' -Recurse -Force   # 注意：仓库内为 adapters/zcode/agents
-# 用户级（所有项目可用）
-Copy-Item -LiteralPath '.\agents\devflow-*.md' -Destination "$env:USERPROFILE\.zcode\agents\" -Force
+# 用户级（所有项目可用，9 个流程角色卡）
+Copy-Item -LiteralPath '.\agents\*.md' -Destination "$env:USERPROFILE\.zcode\agents\" -Force
 ```
 
 Profile frontmatter 字段（ZCode 原生解析，`~/.zcode/agents/` 与 `<项目>/.zcode/agents/` 两处）：
@@ -85,7 +90,23 @@ Copy-Item -LiteralPath "$env:USERPROFILE\.zcode\skills\vibecoding-orchestration\
 
 ## 4. 角色卡
 
-`agents/` 下 5 个**原生 subagent profiles**（Markdown + frontmatter，`Agent` 工具按 `subagent_type` 名直接匹配；安装见 §3.3）：
+`agents/` 下两套**原生 subagent profiles**（Markdown + frontmatter，`Agent` 工具按 `subagent_type` 名直接匹配；安装见 §3.3）：
+
+**9 个流程角色卡（角色名命名，全局安装推荐这套）**：
+
+| 文件 | profile 名（subagent_type） | 对应流程角色 | 权限 |
+|---|---|---|---|
+| `requirement-owner.md` | requirement-owner | 需求负责人（G0 交付） | 禁 Agent（禁递归 spawn） |
+| `prd-owner.md` | prd-owner | 产品需求负责人（G1 交付） | 禁 Agent |
+| `architecture-owner.md` | architecture-owner | 架构负责人（HLD） | 禁 Agent |
+| `architecture-reviewer.md` | architecture-reviewer | 架构评审员（G2 独立评审） | 禁 Agent |
+| `breakdown-owner.md` | breakdown-owner | 拆解负责人（模块清单） | 禁 Agent |
+| `lld-owner.md` | lld-owner | 详细设计负责人（LLD+契约整合） | 禁 Agent |
+| `module-designer.md` | module-designer | 模块设计员 | 禁 Agent |
+| `module-developer.md` | module-developer | 模块开发员 | 禁 Agent |
+| `qa-reviewer.md` | qa-reviewer | QA 评审员（G5 独立评审） | 禁 Agent |
+
+**5 个 devflow-* 结构卡（早期变体，保留兼容）**：
 
 | 文件 | profile 名（subagent_type） | 对应流程角色 | 权限 |
 |---|---|---|---|
@@ -94,6 +115,8 @@ Copy-Item -LiteralPath "$env:USERPROFILE\.zcode\skills\vibecoding-orchestration\
 | `devflow-module-developer.md` | devflow-module-developer | 模块开发员 | 禁 Agent/TaskStop/SendMessage |
 | `devflow-architect-reviewer.md` | devflow-architect-reviewer | 架构评审员（G2） | 禁 Agent/TaskStop/SendMessage；只读由 prompt + 任务书 Scope Lock 约束 |
 | `devflow-qa-reviewer.md` | devflow-qa-reviewer | QA 评审员（G5） | 禁 Agent/TaskStop/SendMessage；只读由 prompt + 任务书 Scope Lock 约束 |
+
+> 两套角色卡均指向 V3 布局（`docs/agent/tasks/`、`docs/user/02-hld/` 等），与 skill 一致；安装到全局 `~/.zcode/agents/` 后**需重开会话**生效（profile 在会话启动时扫描）。
 
 > `role-cards/` 下旧版 `zcode-*.md`（Agent 工具 prompt 模板格式）保留作参考：若未安装 profiles，可把整卡内容粘贴进 Agent 工具 `prompt` 使用（与验收等价）。**推荐改用原生 profiles**——`disallowedTools: [Agent]` 硬性禁止递归 spawn，比 prompt 声明强。
 >
