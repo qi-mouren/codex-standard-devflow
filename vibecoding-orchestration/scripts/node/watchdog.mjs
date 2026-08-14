@@ -44,12 +44,14 @@ const maxMinutes = args.maxMinutes > 0 ? args.maxMinutes : budgetMin + 20;
 const once = !!args.once;
 
 const started = Date.now();
-const runsDir = join(projectPath, "docs", "process", "logs", "runs");
+// 布局探测：V3（docs/agent）优先；旧布局（docs/process）兼容
+const agentDir = existsSync(join(projectPath, "docs", "agent")) ? join(projectPath, "docs", "agent") : join(projectPath, "docs", "process");
+const runsDir = join(agentDir, "logs", "runs");
 const hbFile = heartbeatFile
   ? isAbsolute(heartbeatFile)
     ? heartbeatFile
     : join(projectPath, heartbeatFile)
-  : join(projectPath, "docs", "process", "tasks", ".heartbeat");
+  : join(agentDir, "tasks", ".heartbeat");
 const factsFile = join(runsDir, `${run}.facts.jsonl`);
 mkdirSync(runsDir, { recursive: true });
 
@@ -82,7 +84,7 @@ function getRepoChanges() {
   if (!existsSync(projectPath)) return [];
   const cutoff = Date.now() - Math.max(1, (intervalSec / 60) * 2) * 60000;
   return walkFiles(projectPath, { skipSegments: [".git"] })
-    .filter((f) => !f.replace(/\\/g, "/").includes("/docs/process/logs/") && statSync(f).mtimeMs > cutoff)
+    .filter((f) => !f.replace(/\\/g, "/").includes("/docs/process/logs/") && !f.replace(/\\/g, "/").includes("/docs/agent/logs/") && statSync(f).mtimeMs > cutoff)
     .slice(0, 50)
     .map((f) => f.slice(projectPath.length).replace(/^[\\/]/, ""));
 }
@@ -164,7 +166,7 @@ function recordEvent(event, detail) {
 }
 
 function testInterrupted() {
-  const orch = join(projectPath, "docs", "process", "logs", "orchestration.jsonl");
+  const orch = join(agentDir, "logs", "orchestration.jsonl");
   if (!existsSync(orch)) return false;
   const lines = stripBom(readFileSync(orch, "utf8")).split(/\r?\n/).filter(Boolean).slice(-60);
   const esc = run.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

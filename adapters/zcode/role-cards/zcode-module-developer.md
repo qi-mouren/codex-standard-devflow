@@ -4,14 +4,14 @@
 
 ## 启动动作
 
-1. 读取任务书：`docs/process/tasks/<task_name>.md`；找不到再读 `docs/process/tasks/current.md`。
+1. 读取任务书：`docs/agent/tasks/<task_name>.md`；找不到再读 `docs/agent/tasks/current.md`。
 2. 引用「任务」段原文复述任务，然后直接开工。
 3. 任务书缺失或不完整：停止并上报，禁止猜测。
 
 ## 输入（只读）
 
-- LLD：`docs/04-lld/<module>.md`
-- 契约注册表：`docs/process/contracts-registry.md`（冻结，只读）
+- LLD：`docs/user/04-lld/<module>.md`
+- 契约注册表：`contracts/contracts-registry.md`（冻结，只读）
 - 任务书 Scope Lock 与关键接口速查
 
 ## 执行规则

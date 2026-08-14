@@ -72,7 +72,7 @@ Markdown body = 系统提示词（角色卡内容）
 
 ### 3.4 项目（每次新项目）
 
-1. 项目 `AGENTS.md` 只写身份：产品名、当前史诗、STATE 指针（`docs/process/STATE.md`）。
+1. 项目 `AGENTS.md` 只写身份：产品名、当前史诗、STATE 指针（`docs/agent/STATE.md`）。
 2. 任务书（`assets/templates/06-task.md`）的心跳/长命令脚本路径，引用已安装 skill 的 `scripts/node/`：
 
 ```powershell
@@ -104,14 +104,14 @@ Copy-Item -LiteralPath "$env:USERPROFILE\.zcode\skills\vibecoding-orchestration\
 - **子 agent（必选，可靠路径）**：任务书预填完整心跳命令，角色卡要求「每完成一个工具步骤或最多每 60 秒执行一次」：
 
 ```bash
-node <scripts/node 路径>/update-heartbeat.mjs --project-path <项目> --task-name <task_name> --log-file docs/process/logs/runs/run-<N>.jsonl [--heartbeat-file docs/process/tasks/.heartbeat-<task_name>] --note "<当前动作>"
+node <scripts/node 路径>/update-heartbeat.mjs --project-path <项目> --task-name <task_name> --log-file docs/agent/logs/runs/run-<N>.jsonl [--heartbeat-file docs/agent/tasks/.heartbeat-<task_name>] --note "<当前动作>"
 ```
 
   - 并行轮次必带 `--heartbeat-file`（每个并行 agent 独立心跳文件，互不覆盖）；串行可省略。
   - 预计超过 60 秒的工具调用**必须**用 `long-cmd.mjs` 包装（自动 LONG 心跳 + 可选超时）：
 
 ```bash
-node <scripts/node 路径>/long-cmd.mjs --project-path <项目> --log-file docs/process/logs/runs/run-<N>.jsonl --command "<命令>"
+node <scripts/node 路径>/long-cmd.mjs --project-path <项目> --log-file docs/agent/logs/runs/run-<N>.jsonl --command "<命令>"
 ```
 
 - **主会话（增强，待实测）**：ZCode hooks（`PostToolUse` 等）是否拦截子 agent 工具调用未实测；若覆盖则主会话可自动心跳，但协议不依赖。判卡死阈值沿用流程默认（3 分钟无首心跳预警 / 8 分钟无心跳且无产出判卡死 / LONG 宽限 15 分钟）。
@@ -120,10 +120,10 @@ node <scripts/node 路径>/long-cmd.mjs --project-path <项目> --log-file docs/
 ## 6. 快速开始（新项目）
 
 1. 主会话按流程产出需求锚点 → PRD → HLD → 拆解 → LLD。
-2. G4 冻结契约后，写任务书 `docs/process/tasks/<task_name>.md` + `current.md` 镜像（预填心跳命令、Scope Lock、关键接口速查）。
+2. G4 冻结契约后，写任务书 `docs/agent/tasks/<task_name>.md` + `current.md` 镜像（预填心跳命令、Scope Lock、关键接口速查）。
 3. 在主会话调用 `Agent` 工具（profile 已装到项目 `.zcode/agents/`）：
    - `subagent_type`: `devflow-module-designer`（或 `devflow-module-developer` / `devflow-architect-reviewer` / `devflow-qa-reviewer`）
-   - `description`: `执行 vibecoding-orchestration 流程：读 docs/process/tasks/<task_name>.md 执行任务；先引用"任务"段原文复述，再开工`
+   - `description`: `执行 vibecoding-orchestration 流程：读 docs/agent/tasks/<task_name>.md 执行任务；先引用"任务"段原文复述，再开工`
    - `prompt`: 只写任务书路径与当前任务上下文（角色卡已由 profile 注入，无需重复粘贴）。
    - 需要后台并行时 `run_in_background: true`，多轮任务可一次消息发起多个 Agent 调用。
 4. 通过心跳文件与 `TaskOutput` 观察子会话；完成后更新 STATE 与 Agent Registry。
@@ -144,11 +144,11 @@ node <scripts/node 路径>/long-cmd.mjs --project-path <项目> --log-file docs/
 
 | # | 验收项 | 结果 | 证据 |
 |---|---|---|---|
-| 1 | spawn 模块设计员 → 读任务书 → 复述 → 产出 LLD | ✅ | `docs/04-lld/greet.md`/`farewell.md` 落盘，契约签名逐字一致；心跳账 `run-1.jsonl` 4 条 |
+| 1 | spawn 模块设计员 → 读任务书 → 复述 → 产出 LLD | ✅ | `docs/user/04-lld/greet.md`/`farewell.md` 落盘，契约签名逐字一致；心跳账 `run-1.jsonl` 4 条 |
 | 2 | spawn 模块开发员 → 按 LLD+契约实现 → 本模块测试通过 | ✅ | `src/`+`tests/` 落盘，`python -m unittest` 4/4 全绿；`run-2.jsonl` 3 条 |
 | 3 | 并行 2 个同角色 agent，心跳互不覆盖、产出不冲突 | ✅ | `impl_greet_loud`/`impl_farewell_loud` 同时产出（6/6 全绿）；`.heartbeat-mod_greet`/`.heartbeat-mod_farewell` 独立；`run-3.jsonl` 两 task 共 5 条 |
 | 4 | interrupt 可回收、可重开，不泄漏槽位 | ✅ | `TaskStop` 中断 sleep 120 中的 `slow_probe` 成功（status=stopped）；同名 task_name 立即重开成功；`run-4.jsonl` |
-| 5 | G5 独立评审（评审员 ≠ 产出者）报告落盘 | ✅ | `docs/process/reviews/qa-2026-08-13.md` 结论 PASS；评审员只读、未改任何项目文件；`run-5.jsonl` 4 条 |
+| 5 | G5 独立评审（评审员 ≠ 产出者）报告落盘 | ✅ | `docs/agent/reviews/qa-2026-08-13.md` 结论 PASS；评审员只读、未改任何项目文件；`run-5.jsonl` 4 条 |
 | 6 | 复盘：基于日志输出时间线与异常 | ✅ | `analyze-flow.mjs` 输出 11 个调度事件时间线 + 5 轮心跳明细 + 异常提示 |
 
 **验收记录到的观察项（非阻塞，后续改进）**：

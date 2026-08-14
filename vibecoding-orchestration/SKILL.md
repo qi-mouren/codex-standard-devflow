@@ -33,10 +33,11 @@ description: Vibe Coding 流程编排（vibecoding-orchestration）：从 vibe c
 
 ## 启动新会话（每次必做）
 
-1. 读取项目 `docs/process/STATE.md`，确认当前史诗、阶段、门禁状态。
-2. 运行流程健康检查：Windows Codex 用 `scripts/check-flow.ps1 -ProjectPath <项目路径>`；macOS/Linux 或 opencode 环境用 `scripts/node/check-flow.mjs --project-path <项目路径>`（Node 版参数为 `--kebab-case`，见 environment-adaptation §2.21）。
-3. 依据 STATE.md 判断当前阶段与下一步动作。
-4. 按需加载 references/ 中对应文档。
+1. 读取项目 `docs/agent/STATE.md`（旧布局项目为 `docs/process/STATE.md`，兼容见 document-governance §8），确认当前史诗、阶段、门禁状态。
+2. 读取项目 `docs/agent/issues.md`（问题账），核对未决问题：存在未分诊 open 或 Blocking 级问题必须先处理或显式挂起，禁止带账进入下一阶段。
+3. 运行流程健康检查：Windows Codex 用 `scripts/check-flow.ps1 -ProjectPath <项目路径>`；macOS/Linux 或 opencode 环境用 `scripts/node/check-flow.mjs --project-path <项目路径>`（Node 版参数为 `--kebab-case`，见 environment-adaptation §2.21）。
+4. 依据 STATE.md 判断当前阶段与下一步动作。
+5. 按需加载 references/ 中对应文档。
 
 ## 流程总览
 
@@ -78,12 +79,12 @@ description: Vibe Coding 流程编排（vibecoding-orchestration）：从 vibe c
 核心要点（不可违反）：
 
 - 契约冻结后按依赖图分批并行（每批 ≤2~3 个且按剩余槽位），每批全部 interrupt 回收后再开下一批；单 agent 串行仍是兜底。
-- 任务书写入 `docs/process/tasks/<task_name>.md` 并镜像 current.md 兜底；spawn 消息写任务书路径。
+- 任务书写入 `docs/agent/tasks/<task_name>.md`（旧布局：`docs/process/tasks/`，见 document-governance §8）并镜像 current.md 兜底；spawn 消息写任务书路径。
 - 子 agent 心跳：每完成一个工具步骤或最多每 60 秒一次（带 `-Note`）；并行轮各用独立心跳文件（`-HeartbeatFile`）；预计超过 60 秒的长命令必须用 `scripts/long-cmd.ps1` 包装（自动 LONG 心跳 + 可选超时）；spawn 后 3 分钟无首心跳预警、8 分钟无心跳且无产出才判卡死；interrupt 前必须重读心跳文件并做全仓最近 2 分钟变更扫描，任一新鲜即不得打断。
 - 运行监控：spawn 成功后由总控启动后台 watchdog（事实账 `run-N.facts.jsonl` + 3/8/15 判卡死 + 预算校验，自动写账与事件；并行轮传 `-HeartbeatFile`）；interrupt 前先 `watchdog.ps1 -Once` 取证；任务书必须含预算节（N×M）与关键接口速查；全量回归用 `scripts/run-tests-parallel.ps1` 分片并行（dev 轮只跑本模块单测 + 契约测试）；外部会话写项目文件需登记 `external_change`。
 - 脚本跨平台：`scripts/node/*.mjs` 是全部 PS 脚本的跨平台移植（macOS/Linux/Windows，Node 20+，opencode 自带 Node）；Windows Codex 老环境可继续用 PS 版，其余环境一律用 node 版（同名脚本、`--kebab-case` 参数、同一文件语义），详见 environment-adaptation §2.21。
 - 快速模式：小改动（修 bug / 小接口 / 小重构，不跨模块、不碰契约）走 `references/quick-mode.md`：需求→任务→实现→评审→提交，不跑完整 G0-G5；评审不可免。
-- 文档治理：`references/document-governance.md`（INDEX/摘要/归档/产品级汇总/首次触发整合）；存量历史项目首次接入跑 `scripts/consolidate-docs.ps1`。
+- 文档治理：`references/document-governance.md`（docs/user + docs/agent 目录布局、问题账、INDEX/摘要/归档/产品级汇总/首次触发整合）；存量历史项目首次接入跑 `scripts/consolidate-docs.ps1`。
 - task_name 只允许小写字母/数字/下划线；每轮结束必须 interrupt 回收（槽位不自动释放）。
 - 子 agent 禁止再 spawn；总控每个调度动作必须 record-event 落调度账，复盘跑 analyze-flow.ps1。
 ## 角色清单
@@ -125,9 +126,10 @@ description: Vibe Coding 流程编排（vibecoding-orchestration）：从 vibe c
 - `04-scope.md`：模块拆解清单
 - `05-LLD.md`：模块详细设计
 - `contracts-registry.md`：契约注册表
-- `STATE.md`：项目状态
+- `STATE.md`：项目状态（docs/agent/STATE.md）
 - `traceability.md`：追踪矩阵
 - `06-task.md`：子 agent 任务书（spawn 前落盘）
+- `07-issues.md`：问题账（docs/agent/issues.md，流程运行层问题唯一登记处）
 
 ## 红线规则
 
@@ -140,3 +142,4 @@ description: Vibe Coding 流程编排（vibecoding-orchestration）：从 vibe c
 7. 详细设计和开发实现阶段必须 spawn 模块设计员 / 模块开发员子 agent，主会话不得代劳模块级工作。
 8. G2/G5 必须由独立评审子 agent 执行；无法 spawn 时暂停询问用户，禁止自评替代。
 9. 子 agent spawn/投递失败重试不超过 2 次，仍失败必须上报用户，禁止主会话代做模块级工作。
+10. 流程运行层问题必须登记问题账（docs/agent/issues.md）并走到终态（fixed/deferred/wontfix）；门禁通过前存在未分诊 open 或 Blocking 未决项不得放行。

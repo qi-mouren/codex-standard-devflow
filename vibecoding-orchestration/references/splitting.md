@@ -27,7 +27,7 @@ devflow:
 - `review`（默认）：agent 起草全部切分，人类在唯一检查点 approve/veto。
 
 全委托的两个前提（不满足不得 full）：
-1. 信息补齐：业务优先级、硬性日期、资源约束、合规限制写成 docs/process/epic-inputs.md。
+1. 信息补齐：业务优先级、硬性日期、资源约束、合规限制写成 docs/agent/epic-inputs.md（旧布局：docs/process/epic-inputs.md）。
 2. 可验证标准：每个史诗有独立验收标准、依赖闭环、3-8 模块红线、薄片先行，违者可被脚本抓出。
 
 ## 史诗切分规则

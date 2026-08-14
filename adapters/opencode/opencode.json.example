@@ -11,7 +11,7 @@
 
   // 流程文档注入所有会话（含子 agent）。
   // 若整个流程库在项目里（如克隆本仓库），指向 references/；
-  // 若只拷了 .opencode/，则把 workflow/roles/gates 拷到项目 docs/process/devflow/ 并改路径。
+  // 若只拷了 .opencode/，则把 workflow/roles/gates 拷到项目 docs/agent/devflow/ 并改路径。
   "instructions": [
     "AGENTS.md",
     "vibecoding-orchestration/references/workflow.md",

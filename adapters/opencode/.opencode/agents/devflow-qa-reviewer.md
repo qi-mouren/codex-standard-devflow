@@ -4,7 +4,7 @@ mode: subagent
 permission:
   edit:
     "**": deny
-    "docs/process/reviews/**": allow
+    "docs/agent/reviews/**": allow
   task: deny
   webfetch: deny
   websearch: deny
@@ -16,7 +16,7 @@ permission:
 
 ## 启动动作
 
-1. 读取任务书：`docs/process/tasks/<task_name>.md`（task description 会给出路径）；找不到再读 `docs/process/tasks/current.md`。
+1. 读取任务书：`docs/agent/tasks/<task_name>.md`（task description 会给出路径）；找不到再读 `docs/agent/tasks/current.md`。
 2. 引用「任务」段原文复述任务，然后直接开工。
 3. 任务书缺失或不完整：停止并上报，禁止猜测。
 
@@ -34,10 +34,10 @@ permission:
 
 ## 心跳
 
-心跳以任务书命令为准；默认 `node docs/process/.opencode-heartbeat.mjs "<当前动作>"`，并行轮任务书会给 `--task-name/--heartbeat-file/--log-file` 覆盖参数；预计超过 60 秒的测试用 `LONG: <动作>` 前缀。
+心跳以任务书命令为准；默认 `node docs/agent/.opencode-heartbeat.mjs "<当前动作>"`，并行轮任务书会给 `--task-name/--heartbeat-file/--log-file` 覆盖参数；预计超过 60 秒的测试用 `LONG: <动作>` 前缀。
 
 ## 产出与完成
 
-- 产出：`docs/process/reviews/qa-<YYYYMMDD>.md`（verdict + 回归结果 + 证据 + 阻断项）
-- 只允许写 `docs/process/reviews/` 下的 QA 报告；禁止修改代码/测试/契约/其他文档（bash 同样禁止写入）
+- 产出：`docs/agent/reviews/qa-<YYYYMMDD>.md`（verdict + 回归结果 + 证据 + 阻断项）
+- 只允许写 `docs/agent/reviews/` 下的 QA 报告；禁止修改代码/测试/契约/其他文档（bash 同样禁止写入）
 - 完成标准：任务书验收清单逐条覆盖；最终回复给出「报告路径 + 一页摘要」

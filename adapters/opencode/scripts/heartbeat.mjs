@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 // devflow-heartbeat.mjs — 子 agent 显式心跳（跨平台，Node 即可）
 // 用法:
-//   node docs/process/.opencode-heartbeat.mjs --note "<正在做什么>"
-//   node docs/process/.opencode-heartbeat.mjs "<正在做什么>"   # 位置参数兼容
-//   node docs/process/.opencode-heartbeat.mjs --task-name mod01_r1 --heartbeat-file docs/process/tasks/.heartbeat-mod01_r1 --log-file docs/process/logs/runs/run-01.jsonl --note "<正在做什么>"
-// 配置(可选默认值): docs/process/.devflow-heartbeat.json（BOM 容错；CLI 参数优先）
+//   node docs/agent/.opencode-heartbeat.mjs --note "<正在做什么>"
+//   node docs/agent/.opencode-heartbeat.mjs "<正在做什么>"   # 位置参数兼容
+//   node docs/agent/.opencode-heartbeat.mjs --task-name mod01_r1 --heartbeat-file docs/agent/tasks/.heartbeat-mod01_r1 --log-file docs/agent/logs/runs/run-01.jsonl --note "<正在做什么>"
+// 配置(可选默认值): docs/agent/.devflow-heartbeat.json（BOM 容错；CLI 参数优先）
 //   { "projectPath": ".", "taskName": "mod01_r1",
-//     "heartbeatFile": "docs/process/tasks/.heartbeat-mod01_r1",
-//     "logFile": "docs/process/logs/runs/run-01.jsonl" }
+//     "heartbeatFile": "docs/agent/tasks/.heartbeat-mod01_r1",
+//     "logFile": "docs/agent/logs/runs/run-01.jsonl" }
 // 行为: 写心跳快照（.heartbeat-*）+ 追加执行账（run-*.jsonl），与 Codex 的
 //       update-heartbeat.ps1 / scripts/node/update-heartbeat.mjs 同一文件语义。
 // 退出码: 0=成功 | 2=配置缺失/无效且无 CLI 参数 | 4=task_name 非法
@@ -38,12 +38,12 @@ const note = values["--note"] ?? positionals[0] ?? "heartbeat";
 
 let cfg = null;
 try {
-  cfg = JSON.parse(stripBom(readFileSync(resolve(root, "docs/process/.devflow-heartbeat.json"), "utf8")));
+  cfg = JSON.parse(stripBom(readFileSync(resolve(root, "docs/agent/.devflow-heartbeat.json"), "utf8")));
 } catch {
   cfg = null;
 }
 if (!cfg && !hasCli) {
-  console.error("devflow-heartbeat: missing/invalid docs/process/.devflow-heartbeat.json 且无 CLI 参数");
+  console.error("devflow-heartbeat: missing/invalid docs/agent/.devflow-heartbeat.json 且无 CLI 参数");
   process.exit(2);
 }
 
@@ -53,7 +53,7 @@ if (!/^[a-z0-9_]+$/.test(task)) {
   console.error(`invalid task_name: '${task}' (only lowercase letters, digits, underscores allowed)`);
   process.exit(4);
 }
-const hbArg = values["--heartbeat-file"] ?? cfg?.heartbeatFile ?? "docs/process/tasks/.heartbeat";
+const hbArg = values["--heartbeat-file"] ?? cfg?.heartbeatFile ?? "docs/agent/tasks/.heartbeat";
 const logArg = values["--log-file"] ?? cfg?.logFile ?? "";
 
 const project = resolve(root, projectPath);

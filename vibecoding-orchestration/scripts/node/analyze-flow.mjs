@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // analyze-flow.mjs - 运行复盘（跨平台版，替代 analyze-flow.ps1）
 // 用法: node analyze-flow.mjs --project-path <项目路径> [--out-file <报告路径>] [--all-heartbeats]
-// 输入: docs/process/logs/orchestration.jsonl（调度账）+ docs/process/logs/runs/*.jsonl（执行账）
+// 输入: docs/agent/logs/orchestration.jsonl（调度账）+ docs/agent/logs/runs/*.jsonl（执行账）
 // 输出: 概览统计、调度时间线、每轮明细、异常清单
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
@@ -21,7 +21,10 @@ if (!projectPath) {
   process.exit(4);
 }
 
-const logsDir = join(projectPath, "docs", "process", "logs");
+// 布局探测：V3（docs/agent）优先；旧布局（docs/process）兼容
+const logsDir = existsSync(join(projectPath, "docs", "agent"))
+  ? join(projectPath, "docs", "agent", "logs")
+  : join(projectPath, "docs", "process", "logs");
 const orchFile = join(logsDir, "orchestration.jsonl");
 const runsDir = join(logsDir, "runs");
 const outPath = outFile ? (isAbsolute(outFile) ? outFile : join(projectPath, outFile)) : "";

@@ -55,6 +55,7 @@
 - [ ] 无开放问题（未决问题已清零或显式挂起）
 - [ ] 废案已归档并注明原因
 - [ ] 需求锚点版本号正确
+- [ ] 问题账（docs/agent/issues.md）无未分诊 open 或 Blocking 未决项
 
 ## G1 PRD 评审检查表
 
@@ -70,6 +71,7 @@
 - [ ] 风险清单完整，每个风险有缓解方案
 - [ ] 架构师确认可行，未决项已列明
 - [ ] 架构评审员子 agent 已 spawn 并产出独立评审报告（PASS/驳回）
+- [ ] 评审驳回项已登记问题账（docs/agent/issues.md）
 - [ ] 风险/结论类表述附证据或复现引用（禁止无依据的根因断言）
 
 ## G3 范围对照检查表（脚本可自动检查）
@@ -87,6 +89,7 @@
 - [ ] LLD 规范一致（命名、类型、错误处理）
 - [ ] 人类架构师签字
 - [ ] 打 tag：vX-contracts-frozen
+- [ ] 契约仲裁遗留/未决项已登记问题账（docs/agent/issues.md）
 
 ## G5 集成/QA 检查表
 
@@ -122,17 +125,18 @@
 - [ ] 契约测试通过
 - [ ] 集成回归通过
 - [ ] REQ 验收标准全部达成
-- [ ] 缺陷已分诊：修复或显式延期
+- [ ] 缺陷已分诊：修复或显式延期（**延期缺陷必须登记问题账 deferred**，docs/agent/issues.md）
 - [ ] QA 评审员子 agent 已 spawn 并产出 QA 报告（独立于开发）
 - [ ] 缺陷根因附复现步骤或证据引用（禁止无依据的根因断言）
 - [ ] QA 评审员已读取任务文件并复述任务，经总控确认
 - [ ] 补验场景使用独立 task_name 新建验证 agent（如适用）
 - [ ] UI 相关（启用 ui-design-intelligence 时）：视觉验收通过——对照 design-genome 评审截图，verdict=alive；含动效的 UI 还需 motion gate=pass（录屏/帧序列或 check-motion.ps1）
 - [ ] 安全 lane（适用时）：上表安全项全部通过，结论附证据
+- [ ] 问题账无未分诊 open 或 Blocking 未决项
 
 ## 门禁结果记录
 
-每个门禁的结果记录到 docs/process/STATE.md：
+每个门禁的结果记录到 docs/agent/STATE.md（旧布局：docs/process/STATE.md）：
 
 ```
 gates:

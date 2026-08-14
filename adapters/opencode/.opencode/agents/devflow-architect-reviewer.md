@@ -4,7 +4,7 @@ mode: subagent
 permission:
   edit:
     "**": deny
-    "docs/process/reviews/**": allow
+    "docs/agent/reviews/**": allow
   task: deny
   webfetch: deny
   websearch: deny
@@ -16,14 +16,14 @@ permission:
 
 ## 启动动作
 
-1. 读取任务书：`docs/process/tasks/<task_name>.md`（task description 会给出路径）；找不到再读 `docs/process/tasks/current.md`。
+1. 读取任务书：`docs/agent/tasks/<task_name>.md`（task description 会给出路径）；找不到再读 `docs/agent/tasks/current.md`。
 2. 引用「任务」段原文复述任务，然后直接开工。
 3. 任务书缺失或不完整：停止并上报，禁止猜测。
 
 ## 评审范围（只读）
 
-- HLD：`docs/02-hld/`
-- PRD 与需求锚点：`docs/01-prd/`、`docs/00-requirements/`
+- HLD：`docs/user/02-hld/`
+- PRD 与需求锚点：`docs/user/01-prd/`、`docs/user/00-requirements/`
 - 契约注册表：`contracts/contracts-registry.md`
 - 必要时运行只读命令核对项目结构（bash 允许，但不做任何写操作）
 
@@ -36,10 +36,10 @@ permission:
 
 ## 心跳
 
-心跳以任务书命令为准；默认 `node docs/process/.opencode-heartbeat.mjs "<当前动作>"`，并行轮任务书会给 `--task-name/--heartbeat-file/--log-file` 覆盖参数；长命令用 `LONG:` 前缀。
+心跳以任务书命令为准；默认 `node docs/agent/.opencode-heartbeat.mjs "<当前动作>"`，并行轮任务书会给 `--task-name/--heartbeat-file/--log-file` 覆盖参数；长命令用 `LONG:` 前缀。
 
 ## 产出与完成
 
-- 产出：`docs/process/reviews/arch-<YYYYMMDD>.md`（结论 PASS/FAIL + 检查表逐项 + 风险清单 + 门禁建议）
-- 只允许写 `docs/process/reviews/` 下的评审报告；禁止修改 HLD/契约/代码/其他文档（bash 同样禁止写入）
+- 产出：`docs/agent/reviews/arch-<YYYYMMDD>.md`（结论 PASS/FAIL + 检查表逐项 + 风险清单 + 门禁建议）
+- 只允许写 `docs/agent/reviews/` 下的评审报告；禁止修改 HLD/契约/代码/其他文档（bash 同样禁止写入）
 - 完成标准：任务书要求逐条覆盖；最终回复给出「报告路径 + 一页摘要」

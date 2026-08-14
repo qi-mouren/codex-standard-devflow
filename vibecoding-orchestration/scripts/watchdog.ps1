@@ -2,7 +2,7 @@
 # 用法:
 #   取证(单次): ./watchdog.ps1 -ProjectPath <项目> -Run run-N -Once [-TempPrefix <前缀>] [-ProcessMatch <串>]
 #   后台监控:  Start-Process powershell -WindowStyle Hidden -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File','<scripts/watchdog.ps1>','-ProjectPath','<项目>','-Run','run-N','-BudgetMin','<M>','-TempPrefix','<前缀>'
-# 行为: 每个 tick 追加一行事实到 docs/process/logs/runs/run-N.facts.jsonl；
+# 行为: 每个 tick 追加一行事实到 docs/agent/logs/runs/run-N.facts.jsonl；
 #       心跳阈值 3/8/15 分钟与 check-flow 一致；超阈值/超预算自动写 orchestration 事件；
 #       critical/budget 时落证据快照 run-N.evidence-<HHmmss>.json（含 .heartbeat/全仓变更/临时目录/进程）；
 #       首心跳基线=本轮启动时间（不继承上一轮旧 .heartbeat）；检测到本 Run 的 interrupt 事件后自动退出。

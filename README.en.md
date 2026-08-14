@@ -92,9 +92,9 @@ Put the content of [docs/global-agents.md.example](docs/global-agents.md.example
 
 ## Usage
 
-1. A new project only needs a 3-line `AGENTS.md`: product name, current epic, STATE pointer (`docs/process/STATE.md`).
+1. A new project only needs a 3-line `AGENTS.md`: product name, current epic, STATE pointer (`docs/agent/STATE.md`).
 2. Say "use vibecoding-orchestration for this epic"; for small changes just describe the requirement and Quick Mode kicks in.
-3. At the start of every session, read `docs/process/STATE.md` and run the health check (Windows: `scripts/check-flow.ps1`; macOS/Linux: `scripts/node/check-flow.mjs`).
+3. At the start of every session, read `docs/agent/STATE.md` and run the health check (Windows: `scripts/check-flow.ps1`; macOS/Linux: `scripts/node/check-flow.mjs`).
 
 ## Multi-Platform Adaptation
 

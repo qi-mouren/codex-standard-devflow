@@ -2,7 +2,7 @@
 // record-event.mjs - 总控调度事件记录（跨平台版，替代 record-event.ps1）
 // 用法: node record-event.mjs --project-path <项目> --event <事件> [--task-name <task_name>] [--run <run-N>] [--detail "<一句话或 JSON>"]
 // 退出码: 0=成功 | 5=事件非法或参数缺失
-import { appendFileSync, mkdirSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { hostName, nowIso, parseArgs } from "./_util.mjs";
 
@@ -31,7 +31,10 @@ if (!VALID_EVENTS.includes(event)) {
   process.exit(5);
 }
 
-const logsDir = join(projectPath, "docs", "process", "logs");
+// 布局探测：V3（docs/agent）优先；旧布局（docs/process）兼容
+const logsDir = existsSync(join(projectPath, "docs", "agent"))
+  ? join(projectPath, "docs", "agent", "logs")
+  : join(projectPath, "docs", "process", "logs");
 mkdirSync(logsDir, { recursive: true });
 const logFile = join(logsDir, "orchestration.jsonl");
 const payload = {

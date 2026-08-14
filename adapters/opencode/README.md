@@ -50,7 +50,7 @@ Copy-Item -LiteralPath 'opencode.json.example' -Destination '<项目根>\opencod
 - `subagent_depth: 1`：总控可开子 agent，子 agent 禁止再开——原生对齐「禁止递归」红线。
 - `default_agent: "devflow-controller"`：会话默认落在总控角色。
 - controller 的 `permission.task` 白名单只有四个子角色。
-- 子角色卡全部 `task: deny`；评审员卡 `edit` 只放行 `docs/process/reviews/**`（glob 映射，其余路径 deny）。
+- 子角色卡全部 `task: deny`；评审员卡 `edit` 只放行 `docs/agent/reviews/**`（glob 映射，其余路径 deny）。
 - `instructions` 指向流程文档；opencode 也会自动加载项目根 `AGENTS.md`。
 
 ## 心跳
@@ -58,16 +58,16 @@ Copy-Item -LiteralPath 'opencode.json.example' -Destination '<项目根>\opencod
 **子 agent（可靠路径，必须）**：角色卡要求每个工具步骤后或最多每 60 秒执行：
 
 ```bash
-node docs/process/.opencode-heartbeat.mjs "<当前动作>"
+node docs/agent/.opencode-heartbeat.mjs "<当前动作>"
 ```
 
 **并行轮（同一回合多个子 agent）必须用任务书里的覆盖参数，每 agent 独立心跳文件，禁止共用：**
 
 ```bash
-node docs/process/.opencode-heartbeat.mjs --task-name <task> --heartbeat-file docs/process/tasks/.heartbeat-<task> --log-file docs/process/logs/runs/run-<N>.jsonl "<当前动作>"
+node docs/agent/.opencode-heartbeat.mjs --task-name <task> --heartbeat-file docs/agent/tasks/.heartbeat-<task> --log-file docs/agent/logs/runs/run-<N>.jsonl "<当前动作>"
 ```
 
-脚本写心跳快照 + 追加执行账，跨平台（Windows/macOS/Linux 都有 Node）。可选配置文件 `docs/process/.devflow-heartbeat.json` 提供默认值（BOM 容错）；**CLI 参数优先于配置**，配置缺失时纯 CLI 模式可用。
+脚本写心跳快照 + 追加执行账，跨平台（Windows/macOS/Linux 都有 Node）。可选配置文件 `docs/agent/.devflow-heartbeat.json` 提供默认值（BOM 容错）；**CLI 参数优先于配置**，配置缺失时纯 CLI 模式可用。
 
 **主会话（增强，可选）**：`devflow-heartbeat.js` 插件在 `tool.execute.after` 时自动写心跳。
 
@@ -78,10 +78,10 @@ node docs/process/.opencode-heartbeat.mjs --task-name <task> --heartbeat-file do
 ## 快速开始（新项目）
 
 1. 总控会话（devflow-controller / build）按流程产出需求锚点 → PRD → HLD → 拆解 → LLD。
-2. G4 冻结契约后，写任务书 `docs/process/tasks/<task_name>.md` + `current.md` 镜像；心跳命令写进任务书（并行轮带 `--task-name/--heartbeat-file/--log-file`）。主会话插件的 `.devflow-heartbeat.json` 可选。
+2. G4 冻结契约后，写任务书 `docs/agent/tasks/<task_name>.md` + `current.md` 镜像；心跳命令写进任务书（并行轮带 `--task-name/--heartbeat-file/--log-file`）。主会话插件的 `.devflow-heartbeat.json` 可选。
 3. 在总控会话调用 `task` 工具：
    - `subagent_type`: `devflow-module-designer`（或对应角色）
-   - `description`: `读 docs/process/tasks/<task_name>.md 执行任务；先引用"任务"段原文复述，再开工`
+   - `description`: `读 docs/agent/tasks/<task_name>.md 执行任务；先引用"任务"段原文复述，再开工`
 4. 通过心跳文件与产出观察子会话；完成后进入子会话确认并结束，更新 STATE 与 Agent Registry。
 5. 评审轮：`@devflow-architect-reviewer` / `@devflow-qa-reviewer`，独立报告落盘后过门禁。
 
@@ -113,7 +113,7 @@ node docs/process/.opencode-heartbeat.mjs --task-name <task> --heartbeat-file do
 1. [P1] `heartbeat.mjs` 无 BOM 容错 → 已修复（读配置 `stripBom`），冒烟覆盖。
 2. [P1] 并行心跳无隔离 → 已修复：新增 `--task-name/--heartbeat-file/--log-file` CLI 覆盖参数，任务书写入每 agent 独立心跳命令，冒烟覆盖。
 3. [P2] 总控卡缺调度账纪律 → 已补：`record-event` 必记事件清单 + analyze-flow 复盘说明。
-4. [P2] 评审员 `edit: deny` 与写报告矛盾 → 已改：`edit` 只放行 `docs/process/reviews/**`。
+4. [P2] 评审员 `edit: deny` 与写报告矛盾 → 已改：`edit` 只放行 `docs/agent/reviews/**`。
 5. [P3] 契约注册表路径不一致 → 已统一为 `contracts/contracts-registry.md`（与 workflow/check-flow 一致）。
 
 验证正确项：`subagent_depth` / `default_agent` / `permission.task` 白名单 / `instructions` 实测生效；插件只覆盖 primary（#5894）实测成立；插件与子 agent 心跳双通道并存于同一执行账；`check-flow.mjs` 12 项 OK。

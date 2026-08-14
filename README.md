@@ -92,9 +92,9 @@ python "$env:CODEX_HOME\skills\.system\skill-creator\scripts\quick_validate.py" 
 
 ## 使用
 
-1. 新项目只需 3 行 `AGENTS.md`：产品名、当前史诗、STATE 指针（`docs/process/STATE.md`）。
+1. 新项目只需 3 行 `AGENTS.md`：产品名、当前史诗、STATE 指针（`docs/agent/STATE.md`）。
 2. 会话中说「用 vibecoding-orchestration 跑这个史诗」；小改动直接说需求，skill 会按快速模式处理。
-3. 每次开工先读 `docs/process/STATE.md`，跑健康检查（Windows：`scripts/check-flow.ps1`；macOS/Linux：`scripts/node/check-flow.mjs`）。
+3. 每次开工先读 `docs/agent/STATE.md`，跑健康检查（Windows：`scripts/check-flow.ps1`；macOS/Linux：`scripts/node/check-flow.mjs`）。
 
 ## 多平台适配
 

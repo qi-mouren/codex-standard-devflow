@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // generate-taskbooks.mjs — 从模块拆解清单生成任务书骨架（design / build）
 // 用法:
-//   node generate-taskbooks.mjs --project-path <项目> [--scope docs/03-scope/scope.md] [--phase design|build] [--run run-<N>] [--overwrite] [--mirror-current]
+//   node generate-taskbooks.mjs --project-path <项目> [--scope docs/user/03-scope/scope.md] [--phase design|build] [--run run-<N>] [--overwrite] [--mirror-current]
 // 说明: 生成骨架后必须由总控预审（任务/输入/输出/完成标准/预算/接口速查齐全）才能 spawn；
-//       只生成 docs/process/tasks/<task_name>.md，不写任何业务产物。
+//       只生成 docs/agent/tasks/<task_name>.md，不写任何业务产物。
 // 退出码: 0=成功 | 2=参数错误/scope 缺失或无模块
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -29,7 +29,7 @@ if (!["design", "build"].includes(phase)) {
   process.exit(2);
 }
 
-const scopeRel = args.scope ?? "docs/03-scope/scope.md";
+const scopeRel = args.scope ?? "docs/user/03-scope/scope.md";
 const scopePath = join(project, scopeRel);
 if (!existsSync(scopePath)) {
   console.error(`scope 文件不存在: ${scopePath}`);
@@ -47,7 +47,10 @@ if (!modules.length) {
 
 const run = args.run ?? "run-<N>";
 const today = new Date().toISOString().slice(0, 10);
-const outDir = join(project, "docs", "process", "tasks");
+// 布局探测：V3（docs/agent）优先；旧布局（docs/process）兼容
+const isV3 = existsSync(join(project, "docs", "agent")) || !existsSync(join(project, "docs", "process"));
+const docsRel = (p) => (isV3 ? p : p.replace("docs/user/", "docs/").replace("docs/agent/", "docs/process/"));
+const outDir = join(project, isV3 ? join("docs", "agent", "tasks") : join("docs", "process", "tasks"));
 mkdirSync(outDir, { recursive: true });
 
 function skeleton(taskName, mod) {
@@ -57,10 +60,10 @@ function skeleton(taskName, mod) {
     ? `完成 ${mod.id} ${mod.name} 的详细设计（LLD）并登记契约条目（新增/修改接口同步契约注册表，已冻结部分走变更请求）。`
     : `按 LLD 与冻结契约实现 ${mod.id} ${mod.name}，跑本模块单测与契约测试（全量回归由装配/G5 执行）。`;
   const inputs = phase === "design"
-    ? ["docs/00-requirements/", "docs/01-prd/", "docs/02-hld/", "docs/03-scope/", "contracts/contracts-registry.md"]
-    : [`docs/04-lld/`, "contracts/contracts-registry.md"];
+    ? [docsRel("docs/user/00-requirements/"), docsRel("docs/user/01-prd/"), docsRel("docs/user/02-hld/"), docsRel("docs/user/03-scope/"), "contracts/contracts-registry.md"]
+    : [docsRel("docs/user/04-lld/"), "contracts/contracts-registry.md"];
   const outputs = phase === "design"
-    ? [`docs/04-lld/${taskName}.md（接口、数据结构、依赖、Scope Lock 建议）`]
+    ? [docsRel(`docs/user/04-lld/${taskName}.md（接口、数据结构、依赖、Scope Lock 建议）`)]
     : [`src/${slug}/（模块实现）`, `tests/test_${slug}.py（单测 + 契约测试）`];
   return [
     `# 子 Agent 任务书（${taskName}.md）`,
@@ -68,7 +71,7 @@ function skeleton(taskName, mod) {
     `- 角色：${role}`,
     `- 创建时间：${today}`,
     "- 创建者：总控负责人（骨架由 scripts/node/generate-taskbooks.mjs 生成，需总控预审后放行）",
-    `- 说明：本文件为 docs/process/tasks/${taskName}.md；总控会同步镜像 current.md 作兜底。优先读本文件，找不到再读 current.md，仍无则上报。`,
+    `- 说明：本文件为 ${docsRel("docs/agent/tasks/")}${taskName}.md；总控会同步镜像 current.md 作兜底。优先读本文件，找不到再读 current.md，仍无则上报。`,
     "",
     "## 任务",
     "",
@@ -97,17 +100,17 @@ function skeleton(taskName, mod) {
     "",
     `- 读取本文件 → 引用「任务」段原文复述 → 直接开工（不等待总控确认）`,
     `- 心跳（Node 跨平台；Windows Codex 可用 PS 版等价命令，见模板 06-task.md）：`,
-    `  scripts/node/update-heartbeat.mjs --project-path <项目路径> --task-name ${taskName} --log-file docs/process/logs/runs/${run}.jsonl --heartbeat-file docs/process/tasks/.heartbeat-${taskName} --note "<正在做什么>"`,
+    `  scripts/node/update-heartbeat.mjs --project-path <项目路径> --task-name ${taskName} --log-file ${docsRel("docs/agent/logs/runs/")}${run}.jsonl --heartbeat-file ${docsRel("docs/agent/tasks/")}.heartbeat-${taskName} --note "<正在做什么>"`,
     `- 预计超过 60 秒的命令用 scripts/node/long-cmd.mjs 包装（自动 LONG 心跳 + 可选超时）`,
     "",
     "## 允许修改 / 禁止修改（Scope Lock，总控预填）",
     "",
     `- 允许修改：<src/${slug}/**、tests/test_${slug}.py>`,
-    "- 禁止修改：<contracts/**、docs/02-hld/**、其它模块代码、流程脚本/skill 文件>",
+    `- 禁止修改：<contracts/**、${docsRel("docs/user/02-hld/")}**、其它模块代码、流程脚本/skill 文件>`,
     "",
     "## 运行日志（本轮）",
     "",
-    `- 本轮日志文件：docs/process/logs/runs/${run}.jsonl`,
+    `- 本轮日志文件：${docsRel("docs/agent/logs/runs/")}${run}.jsonl`,
     "- 心跳命令：见「开工方式」（并行轮次必带 --heartbeat-file，串行轮次可省略）",
     "",
     "## 预算（本轮，总控填写）",

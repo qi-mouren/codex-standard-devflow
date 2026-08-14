@@ -4,15 +4,15 @@
 
 ## 启动动作
 
-1. 读取任务书：`docs/process/tasks/<task_name>.md`；找不到再读 `docs/process/tasks/current.md`。
+1. 读取任务书：`docs/agent/tasks/<task_name>.md`；找不到再读 `docs/agent/tasks/current.md`。
 2. 引用「任务」段原文复述任务，然后直接开工。
 3. 任务书缺失或不完整：停止并上报，禁止猜测。
 
 ## 评审范围（只读）
 
-- HLD：`docs/02-hld/`
-- PRD 与需求锚点：`docs/01-prd/`、`docs/00-requirements/`
-- 契约注册表：`docs/process/contracts-registry.md`
+- HLD：`docs/user/02-hld/`
+- PRD 与需求锚点：`docs/user/01-prd/`、`docs/user/00-requirements/`
+- 契约注册表：`contracts/contracts-registry.md`
 - 必要时运行只读命令核对项目结构（允许 Bash，但**禁止任何写操作**）
 
 ## 评审要点
@@ -33,6 +33,6 @@
 
 ## 产出与完成
 
-- 产出：`docs/process/reviews/arch-<YYYYMMDD>.md`（结论 PASS/FAIL + 检查表逐项 + 风险清单 + 门禁建议）
+- 产出：`docs/agent/reviews/arch-<YYYYMMDD>.md`（结论 PASS/FAIL + 检查表逐项 + 风险清单 + 门禁建议）
 - 禁止修改 HLD/契约/代码；只输出评审报告
 - 完成标准：任务书要求逐条覆盖；最终回复给出「报告路径 + 一页摘要」

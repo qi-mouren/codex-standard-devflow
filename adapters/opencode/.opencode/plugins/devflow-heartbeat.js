@@ -2,8 +2,8 @@
 // 作用：主会话（primary）每次工具执行后自动写心跳。
 // 已知限制：opencode 插件钩子不拦截子 agent（task 子会话）的工具调用
 //           （上游 issue #5894 未关闭），子 agent 心跳必须由角色卡显式执行
-//           docs/process/.opencode-heartbeat.mjs，不要依赖本插件判断子 agent 存活。
-// 配置：docs/process/.devflow-heartbeat.json（总控委派前写入）
+//           docs/agent/.opencode-heartbeat.mjs，不要依赖本插件判断子 agent 存活。
+// 配置：docs/agent/.devflow-heartbeat.json（总控委派前写入）
 
 import { readFileSync, writeFileSync, appendFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -13,7 +13,7 @@ function stripBom(s) {
 }
 
 function loadConfig(directory) {
-  const p = resolve(directory, "docs/process/.devflow-heartbeat.json");
+  const p = resolve(directory, "docs/agent/.devflow-heartbeat.json");
   try {
     return JSON.parse(stripBom(readFileSync(p, "utf8")));
   } catch {
@@ -25,8 +25,8 @@ function beat(cfg, note) {
   const project = resolve(cfg.projectPath ?? ".");
   const ts = new Date().toISOString();
   const host = process.env.COMPUTERNAME || process.env.HOSTNAME || "unknown";
-  const hbFile = resolve(project, cfg.heartbeatFile ?? "docs/process/tasks/.heartbeat");
-  const logFile = resolve(project, cfg.logFile ?? "docs/process/logs/runs/run.jsonl");
+  const hbFile = resolve(project, cfg.heartbeatFile ?? "docs/agent/tasks/.heartbeat");
+  const logFile = resolve(project, cfg.logFile ?? "docs/agent/logs/runs/run.jsonl");
   const snapshot = { project, task: cfg.taskName ?? "primary", timestamp: ts, note, host };
 
   mkdirSync(dirname(hbFile), { recursive: true });

@@ -7,7 +7,7 @@
 - 状态：进行中 / 已确认
 - 哈希：<可选，由脚本生成>
 - 日期：yyyy-mm-dd
-- 蒸馏来源：需求会话讨论记录（归档于 docs/00-requirements/raw/）
+- 蒸馏来源：需求会话讨论记录（归档于 docs/user/00-requirements/raw/）
 
 ## 需求清单
 

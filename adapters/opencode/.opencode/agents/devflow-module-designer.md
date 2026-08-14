@@ -14,15 +14,15 @@ permission:
 
 ## 启动动作
 
-1. 读取任务书：`docs/process/tasks/<task_name>.md`（task description 会给出路径）；找不到再读 `docs/process/tasks/current.md`。
+1. 读取任务书：`docs/agent/tasks/<task_name>.md`（task description 会给出路径）；找不到再读 `docs/agent/tasks/current.md`。
 2. 引用「任务」段原文复述任务，然后直接开工（总控已预审放行，不需要等确认）。
 3. 任务书缺失或不完整：停止并上报，禁止猜测。
 
 ## 输入（只读）
 
-- PRD：`docs/01-prd/`
-- HLD：`docs/02-hld/`
-- 模块范围：`docs/03-scope/`
+- PRD：`docs/user/01-prd/`
+- HLD：`docs/user/02-hld/`
+- 模块范围：`docs/user/03-scope/`
 - 契约注册表：`contracts/contracts-registry.md`（已冻结，只读）
 - 流程文档：`vibecoding-orchestration/references/workflow.md`、`roles.md`（或项目内副本）
 
@@ -30,11 +30,11 @@ permission:
 
 - 只写自己模块的 LLD 与任务书 Scope Lock 允许的文件；禁止改其他模块文档。
 - 契约：新增/修改接口必须同步到契约注册表，但已冻结契约禁止原地修改——发现冲突写变更请求，禁止自行改。
-- 心跳以任务书命令为准；默认 `node docs/process/.opencode-heartbeat.mjs "<当前动作>"`，并行轮任务书会给 `--task-name/--heartbeat-file/--log-file` 覆盖参数（每 agent 独立心跳文件，禁止共用）；预计超过 60 秒的命令用 `LONG: <动作>` 前缀。
+- 心跳以任务书命令为准；默认 `node docs/agent/.opencode-heartbeat.mjs "<当前动作>"`，并行轮任务书会给 `--task-name/--heartbeat-file/--log-file` 覆盖参数（每 agent 独立心跳文件，禁止共用）；预计超过 60 秒的命令用 `LONG: <动作>` 前缀。
 - 禁止 spawn 子 agent、禁止按总控角色行动、禁止自评。
 
 ## 产出与完成
 
-- 产出：`docs/04-lld/<module>.md`（含接口、数据结构、依赖、Scope Lock 建议）+ 契约注册表更新（如允许）
+- 产出：`docs/user/04-lld/<module>.md`（含接口、数据结构、依赖、Scope Lock 建议）+ 契约注册表更新（如允许）
 - 完成标准：任务书「完成标准」段逐条满足；接口与契约交叉核对一致
 - 完成后更新追踪矩阵对应条目，最终回复给出「产出路径 + 一页摘要」

@@ -1,7 +1,7 @@
 ﻿# record-event.ps1 - 总控调度事件记录（追加式，append-only）
 # 用法: ./record-event.ps1 -ProjectPath <项目路径> -Event <事件> [-TaskName <task_name>] [-Run <run-N>] [-Detail "<一句话或 JSON>"]
 # 事件: taskbook_write | lock_acquire | lock_release | spawn_start | spawn_success | spawn_fail | interrupt | gate | state_update | user_decision
-# 说明: 总控每个编排动作必须追加一行到 docs/process/logs/orchestration.jsonl（调度账），供 analyze-flow.ps1 复盘。
+# 说明: 总控每个编排动作必须追加一行到 docs/agent/logs/orchestration.jsonl（调度账），供 analyze-flow.ps1 复盘。
 
 param(
     [Parameter(Mandatory = $true)][string]$ProjectPath,
@@ -19,7 +19,8 @@ if ($validEvents -notcontains $Event) {
     exit 5
 }
 
-$logsDir = Join-Path $ProjectPath 'docs\process\logs'
+# 布局探测：V3（docs/agent）优先；旧布局（docs/process）兼容
+$logsDir = if (Test-Path -LiteralPath (Join-Path $ProjectPath 'docs\agent') -PathType Container) { Join-Path $ProjectPath 'docs\agent\logs' } else { Join-Path $ProjectPath 'docs\process\logs' }
 New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
 $logFile = Join-Path $logsDir 'orchestration.jsonl'
 

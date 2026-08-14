@@ -1,6 +1,6 @@
 ﻿# analyze-flow.ps1 - 运行复盘：调度账 + 执行账 -> 时间线与异常报告
 # 用法: ./analyze-flow.ps1 -ProjectPath <项目路径> [-OutFile <报告路径>] [-AllHeartbeats]
-# 输入: docs/process/logs/orchestration.jsonl（调度账）+ docs/process/logs/runs/*.jsonl（执行账）
+# 输入: docs/agent/logs/orchestration.jsonl（调度账）+ docs/agent/logs/runs/*.jsonl（执行账）
 # 输出: 概览统计、调度时间线、每轮明细、异常清单
 
 param(

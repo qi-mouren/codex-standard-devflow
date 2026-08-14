@@ -13,7 +13,7 @@ permission:
 
 ## 启动动作
 
-1. 读取任务书：`docs/process/tasks/<task_name>.md`；找不到再读 `docs/process/tasks/current.md`。
+1. 读取任务书：`docs/agent/tasks/<task_name>.md`；找不到再读 `docs/agent/tasks/current.md`。
 2. 引用「任务」段原文复述任务；若平台有确认通道则先等总控确认，否则复述后直接开工。
 3. 任务书缺失或不完整：停止并上报，禁止猜测。
 

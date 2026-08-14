@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // update-heartbeat.mjs - 子 agent 心跳（跨平台版，替代 update-heartbeat.ps1）
 // 用法:
-//   node update-heartbeat.mjs --project-path <项目> [--task-name <task_name>] [--log-file <docs/process/logs/runs/run-N.jsonl>] [--heartbeat-file <路径>] [--note "<正在做什么>"]
+//   node update-heartbeat.mjs --project-path <项目> [--task-name <task_name>] [--log-file <docs/agent/logs/runs/run-N.jsonl>] [--heartbeat-file <路径>] [--note "<正在做什么>"]
 // 行为: 写 .heartbeat 快照 + 追加执行账（与 PS 版同一文件语义，check-flow/watchdog 可直接复用）。
 // 退出码: 0=成功 | 4=task_name 非法或参数缺失
-import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join } from "node:path";
 import { hostName, nowIso, parseArgs, taskNameOk } from "./_util.mjs";
 
@@ -27,7 +27,10 @@ if (!taskNameOk(taskName)) {
   process.exit(4);
 }
 
-const tasksDir = join(projectPath, "docs", "process", "tasks");
+// 布局探测：V3（docs/agent）优先；旧布局（docs/process）兼容
+const tasksDir = existsSync(join(projectPath, "docs", "agent"))
+  ? join(projectPath, "docs", "agent", "tasks")
+  : join(projectPath, "docs", "process", "tasks");
 mkdirSync(tasksDir, { recursive: true });
 const hbFile = args.heartbeatFile
   ? isAbsolute(args.heartbeatFile)

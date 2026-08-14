@@ -17,7 +17,7 @@ permission:
 
 ## 每次开工
 
-1. 读 `docs/process/STATE.md`，确认当前史诗、阶段、门禁状态。
+1. 读 `docs/agent/STATE.md`，确认当前史诗、阶段、门禁状态。
 2. 运行项目健康检查（优先 `scripts/node/check-flow.mjs --project-path .`；Windows 老环境可用 `scripts/check-flow.ps1`）。
 3. 依据 STATE 判断当前阶段与下一步，加载对应流程文档（workflow/gates/roles）。
 
@@ -27,7 +27,7 @@ permission:
 - 进入详细设计、开发实现、G2、G5 前，用 `task` 工具委派；禁止自己写 LLD、禁止自己实现模块、禁止自己评审。
 - task 调用规范：
   - `subagent_type` ∈ {devflow-module-designer, devflow-module-developer, devflow-architect-reviewer, devflow-qa-reviewer}
-  - `description` 必须写：`读 docs/process/tasks/<task_name>.md 执行任务；先引用"任务"段原文复述，再开工`
+  - `description` 必须写：`读 docs/agent/tasks/<task_name>.md 执行任务；先引用"任务"段原文复述，再开工`
   - 委派前先写任务书 + `current.md` 镜像；心跳命令写进任务书（**并行轮必须带 `--task-name/--heartbeat-file/--log-file`，每 agent 独立心跳文件**，禁止共用配置单文件）
 - 并行：无依赖模块可尝试同一回合发起多个 task 调用（≤2~3 个），先小规模验证再放开。
 - 子 agent 工作期间通过心跳文件/执行账观察，不要空等。判卡死阈值沿用流程默认：spawn 后 3 分钟无首心跳预警、8 分钟无心跳且无产出判卡死；打断前先重读心跳文件并扫描最近 2 分钟仓库变更，任一新鲜即不得打断。

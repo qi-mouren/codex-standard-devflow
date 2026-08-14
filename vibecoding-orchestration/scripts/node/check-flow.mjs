@@ -2,6 +2,7 @@
 // check-flow.mjs - 标准开发流程健康检查（跨平台版，替代 check-flow.ps1）
 // 用法: node check-flow.mjs --project-path <项目路径> [--heartbeat-warn-min 3] [--heartbeat-kill-min 8] [--heartbeat-long-min 15]
 // 退出码: 0=健康 | 1=发现问题或路径不存在
+// 布局: 优先 V3 布局（docs/user + docs/agent）；检测到旧布局（docs/00-requirements 或 docs/process）按旧路径检查并提示建议迁移，不报错。
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -34,16 +35,28 @@ const issue = (m) => {
   issues.push(m);
 };
 
+// 布局探测：V3（docs/user + docs/agent）优先；旧布局（docs/00-requirements 或 docs/process）兼容
 const docsDir = join(projectPath, "docs");
-const reqDir = join(docsDir, "00-requirements");
-const prdDir = join(docsDir, "01-prd");
-const hldDir = join(docsDir, "02-hld");
-const scopeDir = join(docsDir, "03-scope");
-const lldDir = join(docsDir, "04-lld");
-const procDir = join(docsDir, "process");
+const isV3 = existsSync(join(docsDir, "user")) || existsSync(join(docsDir, "agent"));
+const isLegacy = existsSync(join(docsDir, "00-requirements")) || existsSync(join(docsDir, "process"));
+if (isV3) {
+  ok("文档布局: V3（docs/user + docs/agent）");
+} else if (isLegacy) {
+  console.log("[..] 文档布局: 旧布局（docs/00-04 + docs/process），兼容检查，建议迁移（见 references/document-governance.md §8）");
+} else {
+  console.log("[..] 未检测到 docs/user 或 docs/00-requirements，按 V3 布局检查（缺失将报问题）");
+}
+
+const reqDir = isV3 ? join(docsDir, "user", "00-requirements") : join(docsDir, "00-requirements");
+const prdDir = isV3 ? join(docsDir, "user", "01-prd") : join(docsDir, "01-prd");
+const hldDir = isV3 ? join(docsDir, "user", "02-hld") : join(docsDir, "02-hld");
+const scopeDir = isV3 ? join(docsDir, "user", "03-scope") : join(docsDir, "03-scope");
+const lldDir = isV3 ? join(docsDir, "user", "04-lld") : join(docsDir, "04-lld");
+const procDir = isV3 ? join(docsDir, "agent") : join(docsDir, "process");
 const contractsDir = join(projectPath, "contracts");
 const stateFile = join(procDir, "STATE.md");
 const traceFile = join(procDir, "traceability.md");
+const issuesFile = join(procDir, "issues.md");
 
 // 1. 目录结构
 for (const d of [reqDir, prdDir, hldDir, scopeDir, lldDir, procDir, contractsDir]) {
@@ -51,11 +64,13 @@ for (const d of [reqDir, prdDir, hldDir, scopeDir, lldDir, procDir, contractsDir
   else issue(`目录缺失: ${d}`);
 }
 
-// 2. 状态与追踪
+// 2. 状态、追踪与问题账
 if (existsSync(stateFile)) ok("STATE.md 存在");
 else issue(`STATE.md 缺失: ${stateFile}`);
 if (existsSync(traceFile)) ok("traceability.md 存在");
 else issue(`traceability.md 缺失: ${traceFile}`);
+if (existsSync(issuesFile)) ok("issues.md（问题账）存在");
+else issue(`issues.md（问题账）缺失: ${issuesFile}`);
 
 // 3. 门禁产物（按 STATE 中阶段动态判断前序产物）
 let stage = "UNKNOWN";

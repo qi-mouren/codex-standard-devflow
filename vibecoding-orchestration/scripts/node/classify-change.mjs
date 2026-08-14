@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // classify-change.mjs — 自动模式判断（Quick / Standard / Enterprise）
 // 用法:
-//   node classify-change.mjs --project-path <项目> [--files "src/user/api.py docs/01-prd/prd.md"] [--base main] [--head HEAD] [--max-files 3] [--max-lines 200] [--json]
+//   node classify-change.mjs --project-path <项目> [--files "src/user/api.py docs/user/01-prd/prd.md"] [--base main] [--head HEAD] [--max-files 3] [--max-lines 200] [--json]
 // 说明: 启发式建议，最终由人/总控拍板；触发条件详见 references/quick-mode.md。
 // 退出码: 0=给出建议 | 2=参数错误/非 git 且无 --files
 import { execFileSync } from "node:child_process";
@@ -83,8 +83,9 @@ for (const f of files) {
 }
 
 const contractTouch = files.some((f) => /(^|\/)contracts(\/|$)/.test(f) || f.includes("contracts-registry"));
-const archTouch = files.some((f) => /^docs\/(00-requirements|01-prd|02-hld|03-scope|04-lld)\//.test(f));
-const anchorAdded = files.some((f) => /^docs\/00-requirements\/requirements-anchor/.test(f));
+// 业务产物路径兼容两套布局：V3（docs/user/00-04）与旧布局（docs/00-04）
+const archTouch = files.some((f) => /^docs\/(user\/)?(00-requirements|01-prd|02-hld|03-scope|04-lld)\//.test(f));
+const anchorAdded = files.some((f) => /^docs\/(user\/)?00-requirements\/requirements-anchor/.test(f));
 const fileCount = files.length;
 const lines = estimateLines();
 

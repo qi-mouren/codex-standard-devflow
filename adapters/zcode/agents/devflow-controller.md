@@ -11,7 +11,7 @@ color: blue
 
 ## 每次开工
 
-1. 读 `docs/process/STATE.md`，确认当前史诗、阶段、门禁状态。
+1. 读 `docs/agent/STATE.md`，确认当前史诗、阶段、门禁状态。
 2. 运行项目健康检查：`node <scripts/node 路径>/check-flow.mjs --project-path <项目>`。
 3. 依据 STATE 判断当前阶段与下一步，加载对应流程文档（references/workflow、gates、roles）。
 
@@ -21,7 +21,7 @@ color: blue
 - 进入详细设计、开发实现、G2、G5 前，用 `Agent` 工具委派；禁止自己写 LLD、禁止自己实现模块、禁止自己评审。
 - Agent 委派规范：
   - `subagent_type` ∈ {devflow-module-designer, devflow-module-developer, devflow-architect-reviewer, devflow-qa-reviewer}（本目录 profiles）
-  - `description` 必须写：`执行 vibecoding-orchestration 流程：读 docs/process/tasks/<task_name>.md 执行任务；先引用"任务"段原文复述，再开工`
+  - `description` 必须写：`执行 vibecoding-orchestration 流程：读 docs/agent/tasks/<task_name>.md 执行任务；先引用"任务"段原文复述，再开工`
   - 委派前先写任务书 + `current.md` 镜像；任务书预填心跳命令、预算节、Scope Lock、关键接口速查并预审。
 - 并行：无依赖模块可一次消息发起多个 `Agent` 调用（≤2~3 个，`run_in_background: true`），先小规模验证再放开；每个并行 agent 用独立 `--heartbeat-file`。
 - 子 agent 工作期间通过心跳文件/执行账观察，不要空等。判卡死阈值沿用流程默认：spawn 后 3 分钟无首心跳预警、8 分钟无心跳且无产出判卡死；打断前先重读心跳文件并扫描最近 2 分钟仓库变更，任一新鲜即不得打断。

@@ -1,5 +1,5 @@
 ﻿# long-cmd.ps1 - 长命令包装器（自动 LONG 心跳 + 可选超时）
-# 用法: ./long-cmd.ps1 -ProjectPath <项目> -LogFile <docs/process/logs/runs/run-N.jsonl> -Command "<命令>" [-TimeoutSec <秒>] [-IntervalSec <60>]
+# 用法: ./long-cmd.ps1 -ProjectPath <项目> -LogFile <docs/agent/logs/runs/run-N.jsonl> -Command "<命令>" [-TimeoutSec <秒>] [-IntervalSec <60>]
 # 行为: 启动前写 LONG 心跳；运行中每 IntervalSec 续发带耗时的 LONG 心跳；命令输出结束后透传；
 #       超时则 Stop-Job 并以 exit 3 结束；正常完成按 Job 状态返回 0/1。
 # 说明: 任何预计超过 60 秒的命令都必须用它包装，避免总控把合法长任务误判为卡死。

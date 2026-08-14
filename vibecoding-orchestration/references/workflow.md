@@ -15,11 +15,11 @@
 
 | 阶段 | 输入 | 输出 | 落盘位置 |
 |---|---|---|---|
-| 需求负责人 | 需求会话讨论记录 | 需求锚定文档（REQ 清单） | docs/00-requirements/ |
-| 产品需求 | 需求锚点 | PRD | docs/01-prd/ |
-| 架构设计 | PRD | HLD（含风险清单） | docs/02-hld/ |
-| 模块拆解 | HLD | 模块清单与边界 | docs/03-scope/ |
-| 详细设计 | 模块清单 + HLD | LLD + 契约注册表（冻结） | docs/04-lld/ + contracts/ |
+| 需求负责人 | 需求会话讨论记录 | 需求锚定文档（REQ 清单） | docs/user/00-requirements/ |
+| 产品需求 | 需求锚点 | PRD | docs/user/01-prd/ |
+| 架构设计 | PRD | HLD（含风险清单） | docs/user/02-hld/ |
+| 模块拆解 | HLD | 模块清单与边界 | docs/user/03-scope/ |
+| 详细设计 | 模块清单 + HLD | LLD + 契约注册表（冻结） | docs/user/04-lld/ + contracts/ |
 | 开发实现 | 冻结契约 | 模块实现 | src/（按模块） |
 | 集成交付 | 全部模块 | 可交付史诗增量 | main 分支 + tag |
 
@@ -41,15 +41,16 @@
 - 执行协议（任务书 current.md、心跳/超时、锁、回收、监控）与全部环境适配规则：`references/environment-adaptation.md`，进入子 agent 阶段前先读。
 - 子 agent 产出后，主会话先做形式校验，再更新 STATE/追踪矩阵，最后推进门禁。
 - 交接物 = 文件路径 + 一页摘要，禁止传递全部历史上下文。
-- 新会话第一件事：读 docs/process/STATE.md，再跑 check-flow.ps1。
+- 新会话第一件事：读 docs/agent/STATE.md 与 docs/agent/issues.md（旧布局：docs/process/STATE.md），再跑 check-flow.ps1。
 - G5 独立补验：模块已实现、仅需验证的场景，QA 评审员上报总控，由总控用新 task_name 创建独立验证 agent 补跑，并纳入 QA 报告。
 ## 状态持久化
 
 | 内容 | 位置 | 维护者 |
 |---|---|---|
 | 流程规则 | AGENTS.md（薄）+ 本 skill | 全局 |
-| 当前进度 | docs/process/STATE.md | 总控负责人 |
-| 追踪矩阵 | docs/process/traceability.md | 总控负责人 |
+| 当前进度 | docs/agent/STATE.md | 总控负责人 |
+| 追踪矩阵 | docs/agent/traceability.md | 总控负责人 |
+| 问题账 | docs/agent/issues.md | 总控负责人 |
 | 契约注册表 | contracts/contracts-registry.md | 详细设计 |
 | 冻结决策表 | STATE.md「冻结决策表」节 | 总控负责人 |
 | 冻结基线 | Git tag vX-contracts-frozen | 总控负责人 |

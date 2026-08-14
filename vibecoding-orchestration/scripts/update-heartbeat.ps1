@@ -1,5 +1,5 @@
 ﻿# update-heartbeat.ps1 - 子 agent 心跳（证明仍在工作并报告当前进度）
-# 用法: ./update-heartbeat.ps1 -ProjectPath <项目路径> [-TaskName <task_name>] -LogFile <docs/process/logs/runs/run-N.jsonl> [-Note "<正在做什么>"]
+# 用法: ./update-heartbeat.ps1 -ProjectPath <项目路径> [-TaskName <task_name>] -LogFile <docs/agent/logs/runs/run-N.jsonl> [-Note "<正在做什么>"]
 # 子 agent 每完成一个工具步骤或最多每 60 秒调用一次；总控据此区分"长任务"与"卡死"。
 # 写两份记录：.heartbeat 快照（check-flow 实时判定）+ LogFile 追加行（执行账，供 analyze-flow 复盘）。
 
@@ -18,7 +18,8 @@ if ($TaskName -and $TaskName -notmatch '^[a-z0-9_]+$') {
     exit 4
 }
 
-$tasksDir = Join-Path $ProjectPath 'docs\process\tasks'
+# 布局探测：V3（docs/agent）优先；旧布局（docs/process）兼容
+$tasksDir = if (Test-Path -LiteralPath (Join-Path $ProjectPath 'docs\agent') -PathType Container) { Join-Path $ProjectPath 'docs\agent\tasks' } else { Join-Path $ProjectPath 'docs\process\tasks' }
 New-Item -ItemType Directory -Path $tasksDir -Force | Out-Null
 if ($HeartbeatFile -ne "") {
     $hbFile = if ([System.IO.Path]::IsPathRooted($HeartbeatFile)) { $HeartbeatFile } else { Join-Path $ProjectPath $HeartbeatFile }

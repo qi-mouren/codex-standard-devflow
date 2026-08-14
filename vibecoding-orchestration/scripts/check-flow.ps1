@@ -23,24 +23,37 @@ if (!(Test-Path $ProjectPath)) {
 }
 
 $docsDir = Join-Path $ProjectPath "docs"
-$reqDir = Join-Path $docsDir "00-requirements"
-$prdDir = Join-Path $docsDir "01-prd"
-$hldDir = Join-Path $docsDir "02-hld"
-$scopeDir = Join-Path $docsDir "03-scope"
-$lldDir = Join-Path $docsDir "04-lld"
-$procDir = Join-Path $docsDir "process"
+# 布局探测：V3（docs/user + docs/agent）优先；旧布局（docs/00-requirements 或 docs/process）兼容
+$isV3 = (Test-Path (Join-Path $docsDir "user")) -or (Test-Path (Join-Path $docsDir "agent"))
+$isLegacy = (Test-Path (Join-Path $docsDir "00-requirements")) -or (Test-Path (Join-Path $docsDir "process"))
+if ($isV3) {
+    Write-Ok "文档布局: V3（docs/user + docs/agent）"
+} elseif ($isLegacy) {
+    Write-Host "[..] 文档布局: 旧布局（docs/00-04 + docs/process），兼容检查，建议迁移（见 references/document-governance.md §8）" -ForegroundColor DarkGray
+} else {
+    Write-Host "[..] 未检测到 docs/user 或 docs/00-requirements，按 V3 布局检查（缺失将报问题）" -ForegroundColor DarkGray
+}
+
+$reqDir = if ($isV3) { Join-Path $docsDir "user\00-requirements" } else { Join-Path $docsDir "00-requirements" }
+$prdDir = if ($isV3) { Join-Path $docsDir "user\01-prd" } else { Join-Path $docsDir "01-prd" }
+$hldDir = if ($isV3) { Join-Path $docsDir "user\02-hld" } else { Join-Path $docsDir "02-hld" }
+$scopeDir = if ($isV3) { Join-Path $docsDir "user\03-scope" } else { Join-Path $docsDir "03-scope" }
+$lldDir = if ($isV3) { Join-Path $docsDir "user\04-lld" } else { Join-Path $docsDir "04-lld" }
+$procDir = if ($isV3) { Join-Path $docsDir "agent" } else { Join-Path $docsDir "process" }
 $contractsDir = Join-Path $ProjectPath "contracts"
 $stateFile = Join-Path $procDir "STATE.md"
 $traceFile = Join-Path $procDir "traceability.md"
+$issuesFile = Join-Path $procDir "issues.md"
 
 # 1. 目录结构
 foreach ($d in @($reqDir, $prdDir, $hldDir, $scopeDir, $lldDir, $procDir, $contractsDir)) {
     if (Test-Path $d) { Write-Ok "目录存在: $d" } else { Write-Issue "目录缺失: $d" }
 }
 
-# 2. 状态与追踪
+# 2. 状态、追踪与问题账
 if (Test-Path $stateFile) { Write-Ok "STATE.md 存在" } else { Write-Issue "STATE.md 缺失: $stateFile" }
 if (Test-Path $traceFile) { Write-Ok "traceability.md 存在" } else { Write-Issue "traceability.md 缺失: $traceFile" }
+if (Test-Path $issuesFile) { Write-Ok "issues.md（问题账）存在" } else { Write-Issue "issues.md（问题账）缺失: $issuesFile" }
 
 # 3. 门禁产物（按 STATE 中阶段动态判断前序产物）
 $stage = "UNKNOWN"

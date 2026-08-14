@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // consolidate-docs.mjs - 存量历史项目首次文档整合（跨平台版，替代 consolidate-docs.ps1）
 // 用法: node consolidate-docs.mjs --project-path <项目> [--force]
-// 行为: 若项目已有历史产物（STATE/PRD/HLD/LLD/契约）且尚无 docs/process/INDEX.md，
+// 行为: 若项目已有历史产物（STATE/PRD/HLD/LLD/契约）且尚无 docs/agent/INDEX.md，
 //       触发一次性整合：生成 INDEX.md + 摘要骨架 + 归档计划 consolidation-plan.md。
 //       本脚本不做任何文件移动/删除；记录 external_change 事件。
 import { execFileSync } from "node:child_process";
@@ -21,13 +21,23 @@ if (!projectPath) {
   process.exit(2);
 }
 const force = !!args.force;
-const procDir = join(projectPath, "docs", "process");
+
+// 布局探测：V3（docs/agent）优先；旧布局（docs/process）兼容
+const isV3 = existsSync(join(projectPath, "docs", "agent")) || !existsSync(join(projectPath, "docs", "process"));
+const procDir = isV3 ? join(projectPath, "docs", "agent") : join(projectPath, "docs", "process");
 const indexFile = join(procDir, "INDEX.md");
 const planFile = join(procDir, "consolidation-plan.md");
 const stateFile = join(procDir, "STATE.md");
+const archiveRoot = isV3 ? join(projectPath, "docs", "user", "archive") : join(projectPath, "docs", "archive");
+const productRoot = isV3 ? join(projectPath, "docs", "user", "product") : join(projectPath, "docs", "product");
+const archiveRel = isV3 ? "docs/user/archive" : "docs/archive";
+const productRel = isV3 ? "docs/user/product" : "docs/product";
+const stageDirs = isV3
+  ? [["需求", "docs/user/00-requirements"], ["PRD", "docs/user/01-prd"], ["HLD", "docs/user/02-hld"], ["范围", "docs/user/03-scope"], ["LLD", "docs/user/04-lld"]]
+  : [["需求", "docs/00-requirements"], ["PRD", "docs/01-prd"], ["HLD", "docs/02-hld"], ["范围", "docs/03-scope"], ["LLD", "docs/04-lld"]];
 
 if (!existsSync(procDir)) {
-  console.log("项目无 docs/process 目录，未按标准流程组织，跳过整合");
+  console.log("项目无 docs/agent 或 docs/process 目录，未按标准流程组织，跳过整合");
   process.exit(2);
 }
 if (!existsSync(stateFile) && !force) {
@@ -39,10 +49,10 @@ if (existsSync(indexFile) && !force) {
   process.exit(0);
 }
 
-console.log("触发：存量历史项目首次文档整合");
+console.log("触发：存量历史项目首次文档整合" + (isV3 ? "（V3 布局）" : "（旧布局，建议迁移）"));
 mkdirSync(procDir, { recursive: true });
-mkdirSync(join(projectPath, "docs", "archive"), { recursive: true });
-mkdirSync(join(projectPath, "docs", "product"), { recursive: true });
+mkdirSync(archiveRoot, { recursive: true });
+mkdirSync(productRoot, { recursive: true });
 
 // 1. 扫描产物
 const rows = [];
@@ -55,11 +65,7 @@ function addRows(stage, dirRel) {
     .sort();
   for (const f of files) rows.push({ stage, file: f, path: `${dirRel.replace(/\\/g, "/")}/${f}` });
 }
-addRows("需求", "docs/00-requirements");
-addRows("PRD", "docs/01-prd");
-addRows("HLD", "docs/02-hld");
-addRows("范围", "docs/03-scope");
-addRows("LLD", "docs/04-lld");
+for (const [stage, dir] of stageDirs) addRows(stage, dir);
 if (existsSync(join(projectPath, "contracts", "contracts-registry.md"))) {
   rows.push({ stage: "契约", file: "contracts-registry.md", path: "contracts/contracts-registry.md" });
 }
@@ -87,7 +93,11 @@ sb.push(`> 由 scripts/consolidate-docs.mjs 首次生成（${today}）；新会�
 sb.push("");
 sb.push("## 当前状态");
 sb.push("");
-sb.push("- 当前史诗/阶段：见 docs/process/STATE.md（本索引只给地图）");
+sb.push("- 当前史诗/阶段：见 docs/agent/STATE.md（本索引只给地图）");
+sb.push("");
+sb.push("## 问题账");
+sb.push("");
+sb.push("- docs/agent/issues.md：流程运行层问题唯一登记处（评审驳回 / 延期缺陷 / 环境缺陷 / 流程偏差）；门禁通过前核对无未分诊 open 或 Blocking 未决项。");
 sb.push("");
 sb.push("## 产物清单");
 sb.push("");
@@ -102,20 +112,20 @@ sb.push("");
 if (epics.length === 0) {
   sb.push("（未从 STATE 探测到史诗标记，或全部为当前史诗）");
 } else {
-  for (const e of epics.sort()) sb.push(`- ${e}：docs/archive/${e}/（summary.md 待整合轮填写）`);
+  for (const e of epics.sort()) sb.push(`- ${e}：${archiveRel}/${e}/（summary.md 待整合轮填写）`);
 }
 sb.push("");
 sb.push("## 产品级汇总（用户视角，待整合轮生成）");
 sb.push("");
-sb.push("- 产品需求总览：docs/product/PRODUCT-PRD.md（待生成）");
-sb.push("- 产品架构总览：docs/product/PRODUCT-HLD.md（待生成）");
-sb.push("- 里程碑与发布：docs/product/ROADMAP.md（待生成）");
+sb.push(`- 产品需求总览：${productRel}/PRODUCT-PRD.md（待生成）`);
+sb.push(`- 产品架构总览：${productRel}/PRODUCT-HLD.md（待生成）`);
+sb.push(`- 里程碑与发布：${productRel}/ROADMAP.md（待生成）`);
 sb.push("");
 sb.push("## 检索建议");
 sb.push("");
 sb.push("- 找接口：rg \"CON-\" contracts/contracts-registry.md");
-sb.push("- 找验收口径：rg \"验收\" docs/01-prd/");
-sb.push("- 找历史决策：rg \"<关键词>\" docs/archive/ docs/process/");
+sb.push(`- 找验收口径：rg \"验收\" ${isV3 ? "docs/user/01-prd/" : "docs/01-prd/"}`);
+sb.push(`- 找历史决策：rg \"<关键词>\" ${archiveRel}/ docs/agent/`);
 writeFileSync(indexFile, sb.join("\n") + "\n", "utf8");
 console.log(`已生成: ${indexFile}`);
 
@@ -129,7 +139,7 @@ if (epics.length === 0) {
   plan.push("未探测到已完成史诗，无需归档。");
 } else {
   for (const e of epics.sort()) {
-    const target = join(projectPath, "docs", "archive", e);
+    const target = join(archiveRoot, e);
     const skeleton = join(target, "summary.md");
     mkdirSync(target, { recursive: true });
     if (!existsSync(skeleton)) {
@@ -144,7 +154,7 @@ if (epics.length === 0) {
         "- 契约影响：<新增/零升级>",
       ].join("\n");
       writeFileSync(skeleton, sum + "\n", "utf8");
-      plan.push(`- [${e}] 已生成摘要骨架 ${skeleton}；请整合轮填写并确认是否归档（移动 ${e} 相关产物到 docs/archive/${e}/）`);
+      plan.push(`- [${e}] 已生成摘要骨架 ${skeleton}；请整合轮填写并确认是否归档（移动 ${e} 相关产物到 ${archiveRel}/${e}/）`);
     } else {
       plan.push(`- [${e}] 摘要已存在：${skeleton}`);
     }

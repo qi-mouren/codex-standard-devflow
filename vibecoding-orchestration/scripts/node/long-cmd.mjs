@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // long-cmd.mjs - 长命令包装器（跨平台版，替代 long-cmd.ps1）
 // 用法:
-//   node long-cmd.mjs --project-path <项目> --log-file <docs/process/logs/runs/run-N.jsonl> --command "<命令>" [--timeout-sec <秒>] [--interval-sec 60] [--task-name child]
+//   node long-cmd.mjs --project-path <项目> --log-file <docs/agent/logs/runs/run-N.jsonl> --command "<命令>" [--timeout-sec <秒>] [--interval-sec 60] [--task-name child]
 // 行为: 启动前写 LONG 心跳；运行中每 interval-sec 续发带耗时的 LONG 心跳；命令输出结束后透传；
 //       超时则终止子进程树并以 exit 3 结束；正常完成透传命令退出码。
 // 说明: Windows 用 powershell.exe（保持与 PS 版一致的执行语义），macOS/Linux 用 /bin/sh -c；
