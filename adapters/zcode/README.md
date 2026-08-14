@@ -18,7 +18,7 @@
 
 | 能力 | ZCode 原生机制 | 实测 | 文件式兜底 |
 |---|---|---|---|
-| spawn | `Agent` 工具：`subagent_type` 指定 profile（`devflow-*`，本目录 `agents/`），`description` 写「读 <任务书路径> 执行任务」；prompt 直达可靠 | ✅ 可靠（实机验证：profile 格式被原生解析，Agent 工具按名匹配） | 任务书路径 + current.md 镜像 |
+| spawn | `Agent` 工具：`subagent_type` 指定 profile（9 个角色卡，本目录 `agents/`），`description` 写「读 <任务书路径> 执行任务」；prompt 直达可靠 | ✅ 可靠（实机验证：profile 格式被原生解析，Agent 工具按名匹配） | 任务书路径 + current.md 镜像 |
 | message | prompt 直达 + `SendMessage`（agent 间消息）+ `TaskOutput` 查执行结果 | ✅ 可靠 | 任务书为唯一真相 |
 | interrupt | `TaskStop` 编程式中断；background 任务完成自动通知主会话并回收 | ✅ 完成即回收（本会话 background 子任务完成后自动通知） | 每轮单 agent + STATE Agent Registry |
 | list | `/tasks` 命令 + `TaskOutput` 状态查询 | ✅ 可用 | STATE Agent Registry |
@@ -43,10 +43,7 @@ Copy-Item -LiteralPath '.\analyze-idea'             -Destination "$env:USERPROFI
 
 ### 3.3 子 agent profiles（项目级，每次新项目）
 
-ZCode 原生 subagent 定义 = Markdown + frontmatter，放 `<项目>/.zcode/agents/`（仅该项目可用、随 git 版本化）；用户级可放 `~/.zcode/agents/`（所有项目）。本仓库维护两套 profile 源（`agents/`）：
-
-- **9 个流程角色卡（角色名命名，`requirement-owner.md` 等）**：完整角色集（需求/PRD/架构/拆解/LLD/模块设计/模块开发/架构评审/QA 评审），与 `references/roles.md` 一一对应，全局安装用这套。
-- **5 个 devflow-* 结构卡（`devflow-*.md`）**：早期结构化变体（含工具白名单/禁递归字段），保留兼容。
+ZCode 原生 subagent 定义 = Markdown + frontmatter，放 `<项目>/.zcode/agents/`（仅该项目可用、随 git 版本化）；用户级可放 `~/.zcode/agents/`（所有项目）。本仓库维护 **9 个流程角色卡**（`agents/`，与 `references/roles.md` 一一对应）：
 
 复制到项目或用户级：
 
@@ -61,7 +58,7 @@ Profile frontmatter 字段（ZCode 原生解析，`~/.zcode/agents/` 与 `<项�
 
 ```markdown
 ---
-name: devflow-module-developer   # 必填，Agent 工具 subagent_type 按此匹配
+name: module-developer   # 必填，Agent 工具 subagent_type 按此匹配
 description: 模块开发员：...      # 必填
 tools: [Bash, Read, Write, Edit, Grep, Glob, TodoWrite]   # 工具白名单
 disallowedTools: [Agent, TaskStop, SendMessage]            # 禁用工具（评审员禁 Agent=禁递归 spawn）
@@ -92,7 +89,7 @@ Copy-Item -LiteralPath "$env:USERPROFILE\.zcode\skills\vibecoding-orchestration\
 
 `agents/` 下两套**原生 subagent profiles**（Markdown + frontmatter，`Agent` 工具按 `subagent_type` 名直接匹配；安装见 §3.3）：
 
-**9 个流程角色卡（角色名命名，全局安装推荐这套）**：
+**9 个流程角色卡（角色名命名，与 `references/roles.md` 一一对应）**：
 
 | 文件 | profile 名（subagent_type） | 对应流程角色 | 权限 |
 |---|---|---|---|
@@ -106,17 +103,7 @@ Copy-Item -LiteralPath "$env:USERPROFILE\.zcode\skills\vibecoding-orchestration\
 | `module-developer.md` | module-developer | 模块开发员 | 禁 Agent |
 | `qa-reviewer.md` | qa-reviewer | QA 评审员（G5 独立评审） | 禁 Agent |
 
-**5 个 devflow-* 结构卡（早期变体，保留兼容）**：
-
-| 文件 | profile 名（subagent_type） | 对应流程角色 | 权限 |
-|---|---|---|---|
-| `devflow-controller.md` | devflow-controller | 总控负责人（主会话角色） | tools 全开 |
-| `devflow-module-designer.md` | devflow-module-designer | 模块设计员 | 禁 Agent/TaskStop/SendMessage |
-| `devflow-module-developer.md` | devflow-module-developer | 模块开发员 | 禁 Agent/TaskStop/SendMessage |
-| `devflow-architect-reviewer.md` | devflow-architect-reviewer | 架构评审员（G2） | 禁 Agent/TaskStop/SendMessage；只读由 prompt + 任务书 Scope Lock 约束 |
-| `devflow-qa-reviewer.md` | devflow-qa-reviewer | QA 评审员（G5） | 禁 Agent/TaskStop/SendMessage；只读由 prompt + 任务书 Scope Lock 约束 |
-
-> 两套角色卡均指向 V3 布局（`docs/agent/tasks/`、`docs/user/02-hld/` 等），与 skill 一致；安装到全局 `~/.zcode/agents/` 后**需重开会话**生效（profile 在会话启动时扫描）。
+> 所有角色卡指向 V3 布局（`docs/agent/tasks/`、`docs/user/02-hld/` 等），与 skill 一致；安装到全局 `~/.zcode/agents/` 后**需重开会话**生效（profile 在会话启动时扫描）。
 
 > `role-cards/` 下旧版 `zcode-*.md`（Agent 工具 prompt 模板格式）保留作参考：若未安装 profiles，可把整卡内容粘贴进 Agent 工具 `prompt` 使用（与验收等价）。**推荐改用原生 profiles**——`disallowedTools: [Agent]` 硬性禁止递归 spawn，比 prompt 声明强。
 >
@@ -145,7 +132,7 @@ node <scripts/node 路径>/long-cmd.mjs --project-path <项目> --log-file docs/
 1. 主会话按流程产出需求锚点 → PRD → HLD → 拆解 → LLD。
 2. G4 冻结契约后，写任务书 `docs/agent/tasks/<task_name>.md` + `current.md` 镜像（预填心跳命令、Scope Lock、关键接口速查）。
 3. 在主会话调用 `Agent` 工具（profile 已装到项目 `.zcode/agents/`）：
-   - `subagent_type`: `devflow-module-designer`（或 `devflow-module-developer` / `devflow-architect-reviewer` / `devflow-qa-reviewer`）
+   - `subagent_type`: `module-designer`（或 9 个角色卡中对应一个：requirement-owner / prd-owner / architecture-owner / architecture-reviewer / breakdown-owner / lld-owner / module-designer / module-developer / qa-reviewer）
    - `description`: `执行 vibecoding-orchestration 流程：读 docs/agent/tasks/<task_name>.md 执行任务；先引用"任务"段原文复述，再开工`
    - `prompt`: 只写任务书路径与当前任务上下文（角色卡已由 profile 注入，无需重复粘贴）。
    - 需要后台并行时 `run_in_background: true`，多轮任务可一次消息发起多个 Agent 调用。

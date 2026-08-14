@@ -5,10 +5,10 @@ permission:
   edit: allow
   bash: allow
   task:
-    devflow-module-designer: allow
-    devflow-module-developer: allow
-    devflow-architect-reviewer: allow
-    devflow-qa-reviewer: allow
+    module-designer: allow
+    module-developer: allow
+    architecture-reviewer: allow
+    qa-reviewer: allow
 ---
 
 # devflow-controller（总控负责人）
@@ -26,7 +26,7 @@ permission:
 - 主管层（需求锚定 → PRD → HLD → 拆解 → LLD → G4）严格先后；执行层（详细设计/开发/评审）必须委派子 agent。
 - 进入详细设计、开发实现、G2、G5 前，用 `task` 工具委派；禁止自己写 LLD、禁止自己实现模块、禁止自己评审。
 - task 调用规范：
-  - `subagent_type` ∈ {devflow-module-designer, devflow-module-developer, devflow-architect-reviewer, devflow-qa-reviewer}
+  - `subagent_type` ∈ {requirement-owner, prd-owner, architecture-owner, architecture-reviewer, breakdown-owner, lld-owner, module-designer, module-developer, qa-reviewer}
   - `description` 必须写：`读 docs/agent/tasks/<task_name>.md 执行任务；先引用"任务"段原文复述，再开工`
   - 委派前先写任务书 + `current.md` 镜像；心跳命令写进任务书（**并行轮必须带 `--task-name/--heartbeat-file/--log-file`，每 agent 独立心跳文件**，禁止共用配置单文件）
 - 并行：无依赖模块可尝试同一回合发起多个 task 调用（≤2~3 个），先小规模验证再放开。

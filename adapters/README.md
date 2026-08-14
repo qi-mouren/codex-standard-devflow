@@ -31,12 +31,7 @@
 每个 `adapters/<platform>/` 必须包含：
 
 1. `README.md`：安装方式 + 六能力映射表 + 与 Codex 的差异与绕法 + 已知限制。
-2. 角色卡：用平台自己的 agent 定义格式覆盖：
-   - 总控（primary）
-   - 模块设计员（subagent）
-   - 模块开发员（subagent）
-   - 架构评审员（subagent，只读）
-   - QA 评审员（subagent，只读）
+2. 角色卡：用平台自己的 agent 定义格式覆盖**全部 9 个流程角色**（与 `vibecoding-orchestration/references/roles.md` 一一对应）：requirement-owner / prd-owner / architecture-owner / architecture-reviewer / breakdown-owner / lld-owner / module-designer / module-developer / qa-reviewer；总控（primary，若平台支持）单独一卡。
 3. 心跳方案：平台钩子（若对子 agent 生效）或显式心跳脚本/命令；角色卡必须写明心跳纪律。脚本层优先跨平台运行时（Node，macOS/Linux/Windows 通用），PowerShell 仅作为 Windows Codex 兼容层。
 4. 验收记录：真实跑一轮的证据（首次提交可为「待验收」，合并前必须补）。
 

@@ -28,11 +28,18 @@ Copy-Item -LiteralPath 'opencode.json.example' -Destination '<项目根>\opencod
 
 | 文件 | mode | 对应流程角色 |
 |---|---|---|
-| `devflow-controller.md` | primary | 总控负责人 |
-| `devflow-module-designer.md` | subagent | 模块设计员 |
-| `devflow-module-developer.md` | subagent | 模块开发员 |
-| `devflow-architect-reviewer.md` | subagent | 架构评审员（G2，只读源码、可写评审报告） |
-| `devflow-qa-reviewer.md` | subagent | QA 评审员（G5，只读源码、可写 QA 报告） |
+| `devflow-controller.md` | primary | 总控负责人（主会话，`default_agent`） |
+| `requirement-owner.md` | subagent | 需求负责人（G0 交付） |
+| `prd-owner.md` | subagent | 产品需求负责人（G1 交付） |
+| `architecture-owner.md` | subagent | 架构负责人（HLD） |
+| `architecture-reviewer.md` | subagent | 架构评审员（G2，只读源码、可写评审报告） |
+| `breakdown-owner.md` | subagent | 拆解负责人（模块清单） |
+| `lld-owner.md` | subagent | 详细设计负责人（LLD+契约整合） |
+| `module-designer.md` | subagent | 模块设计员 |
+| `module-developer.md` | subagent | 模块开发员 |
+| `qa-reviewer.md` | subagent | QA 评审员（G5，只读源码、可写 QA 报告） |
+
+9 个子角色卡与 zcode 适配层（`adapters/zcode/agents/`）同名同内容（frontmatter 按平台语法转换），角色正文统一派生自 `references/roles.md`。
 
 ## 六能力映射
 
@@ -49,8 +56,8 @@ Copy-Item -LiteralPath 'opencode.json.example' -Destination '<项目根>\opencod
 
 - `subagent_depth: 1`：总控可开子 agent，子 agent 禁止再开——原生对齐「禁止递归」红线。
 - `default_agent: "devflow-controller"`：会话默认落在总控角色。
-- controller 的 `permission.task` 白名单只有四个子角色。
-- 子角色卡全部 `task: deny`；评审员卡 `edit` 只放行 `docs/agent/reviews/**`（glob 映射，其余路径 deny）。
+- controller 的 `permission.task` 白名单 = 9 个子角色（requirement-owner/prd-owner/architecture-owner/architecture-reviewer/breakdown-owner/lld-owner/module-designer/module-developer/qa-reviewer）。
+- 子角色卡全部 `task: deny`；评审员卡（architecture-reviewer/qa-reviewer）`edit` 只放行 `docs/agent/reviews/**`（glob 映射，其余路径 deny）。
 - `instructions` 指向流程文档；opencode 也会自动加载项目根 `AGENTS.md`。
 
 ## 心跳
@@ -80,10 +87,10 @@ node docs/agent/.opencode-heartbeat.mjs --task-name <task> --heartbeat-file docs
 1. 总控会话（devflow-controller / build）按流程产出需求锚点 → PRD → HLD → 拆解 → LLD。
 2. G4 冻结契约后，写任务书 `docs/agent/tasks/<task_name>.md` + `current.md` 镜像；心跳命令写进任务书（并行轮带 `--task-name/--heartbeat-file/--log-file`）。主会话插件的 `.devflow-heartbeat.json` 可选。
 3. 在总控会话调用 `task` 工具：
-   - `subagent_type`: `devflow-module-designer`（或对应角色）
+   - `subagent_type`: `module-designer`（或 9 角色中对应一个）
    - `description`: `读 docs/agent/tasks/<task_name>.md 执行任务；先引用"任务"段原文复述，再开工`
 4. 通过心跳文件与产出观察子会话；完成后进入子会话确认并结束，更新 STATE 与 Agent Registry。
-5. 评审轮：`@devflow-architect-reviewer` / `@devflow-qa-reviewer`，独立报告落盘后过门禁。
+5. 评审轮：`@architecture-reviewer` / `@qa-reviewer`，独立报告落盘后过门禁。
 
 ## 已知限制与绕法
 
